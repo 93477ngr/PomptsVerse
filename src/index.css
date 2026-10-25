@@ -1,0 +1,215 @@
+/* Custom Scrollbar & Utility Animations */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.hide-scrollbar {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.glass-effect {
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+.glass-badge {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+.gradient-text {
+  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.gradient-text-gold {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+@keyframes pulseGlow {
+  0%, 100% { opacity: 0.4; transform: scale(1); }
+  50% { opacity: 0.8; transform: scale(1.05); }
+}
+.animate-glow {
+  animation: pulseGlow 4s infinite ease-in-out;
+}
+
+/* Floating AI Badges & Neural Keyframes */
+@keyframes floatSlow {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-12px) rotate(2deg); }
+}
+@keyframes floatDelayed {
+  0%, 100% { transform: translateY(0px) rotate(0deg); }
+  50% { transform: translateY(-16px) rotate(-2.5deg); }
+}
+@keyframes floatReverse {
+  0%, 100% { transform: translateY(-10px) rotate(1.5deg); }
+  50% { transform: translateY(8px) rotate(-2deg); }
+}
+@keyframes floatPulse {
+  0%, 100% { transform: translateY(0px) scale(1); }
+  50% { transform: translateY(-8px) scale(1.04); }
+}
+@keyframes orbitParticles {
+  0% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(180deg) scale(1.1); }
+  100% { transform: rotate(360deg) scale(1); }
+}
+@keyframes particleDrift {
+  0% { transform: translateY(0px) translateX(0px); opacity: 0.3; }
+  50% { transform: translateY(-24px) translateX(14px); opacity: 0.8; }
+  100% { transform: translateY(0px) translateX(0px); opacity: 0.3; }
+}
+@keyframes neuralPulse {
+  0%, 100% { stroke-opacity: 0.15; stroke-width: 1; }
+  50% { stroke-opacity: 0.45; stroke-width: 1.8; }
+}
+
+.animate-float-slow {
+  animation: floatSlow 6s ease-in-out infinite;
+}
+.animate-float-delayed {
+  animation: floatDelayed 7s ease-in-out 1s infinite;
+}
+.animate-float-reverse {
+  animation: floatReverse 8s ease-in-out 0.5s infinite;
+}
+.animate-float-pulse {
+  animation: floatPulse 5s ease-in-out 0.8s infinite;
+}
+.animate-orbit {
+  animation: orbitParticles 22s linear infinite;
+}
+.animate-particle-1 {
+  animation: particleDrift 5s ease-in-out infinite;
+}
+.animate-particle-2 {
+  animation: particleDrift 7s ease-in-out 1.5s infinite;
+}
+.animate-neural {
+  animation: neuralPulse 4s ease-in-out infinite;
+}
+
+/* Logo Glow Animation */
+@keyframes logoPulse {
+  0%, 100% { box-shadow: 0 0 15px rgba(37, 99, 235, 0.25); transform: translateY(0); }
+  50% { box-shadow: 0 0 25px rgba(124, 58, 237, 0.45); transform: translateY(-2px); }
+}
+.animate-logo {
+  animation: logoPulse 3s ease-in-out infinite;
+}
+
+/* Shimmer Effect for Hero & CTA */
+.btn-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.btn-shimmer::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(60deg, transparent, rgba(255,255,255,0.35), transparent);
+  transform: rotate(30deg);
+  transition: all 0.6s ease;
+  opacity: 0;
+}
+.btn-shimmer:hover::after {
+  opacity: 1;
+  animation: shimmer 1.5s infinite;
+}
+@keyframes shimmer {
+  0% { transform: translate(-100%, -100%) rotate(30deg); }
+  100% { transform: translate(100%, 100%) rotate(30deg); }
+}
+
+/* =============================================================================
+   AD SYSTEM — Containers, Labels & CLS Prevention
+   ============================================================================= */
+
+/* CLS prevention: reserve space for ad containers, use content-visibility */
+.ad-container {
+  position: relative;
+  overflow: hidden;
+  contain: layout style;
+  content-visibility: auto;
+}
+
+/* Hide empty ad containers to prevent blank gaps */
+.ad-container:empty {
+  display: none;
+  min-height: 0 !important;
+}
+
+/* Sponsored / Ad label — always visible, compliant with AdSense policies */
+.ad-sponsored-label {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.06);
+  color: #64748b;
+  z-index: 5;
+  pointer-events: none;
+}
+
+/* Sponsored banner wrapper — premium card styling */
+.ad-sponsored-banner {
+  position: relative;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.ad-sponsored-banner:hover {
+  box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.1);
+}
+
+/* Sponsored prompt card — distinguishing border highlight */
+.ad-sponsored-card {
+  position: relative;
+}
+.ad-sponsored-card > div {
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+/* AdSense wrapper — responsive and CLS-safe */
+.ad-adsense-wrapper {
+  width: 100%;
+  overflow: hidden;
+  text-align: center;
+}
+.ad-adsense-wrapper ins {
+  display: block;
+  width: 100%;
+}
+
+/* Responsive ad container sizing */
+@media (max-width: 640px) {
+  .ad-container[data-ad-placement="sidebar"] {
+    min-height: 100px !important;
+  }
+  .ad-container[data-ad-placement="footer-banner"] {
+    min-height: 50px !important;
+  }
+}

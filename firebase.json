@@ -1,0 +1,43 @@
+{
+  "hosting": {
+    "public": "dist",
+    "ignore": [
+      "firebase.json",
+      "**/.*",
+      "**/node_modules/**"
+    ],
+    "rewrites": [
+      {
+        "source": "/google93e1f106c7169015.html",
+        "destination": "/google93e1f106c7169015.html"
+      },
+      {
+        "source": "/admin",
+        "destination": "/admin.html"
+      },
+      {
+        "source": "**",
+        "destination": "/index.html"
+      }
+    ],
+    "headers": [
+      {
+        "source": "/google93e1f106c7169015.html",
+        "headers": [
+          { "key": "Cache-Control", "value": "no-store" },
+          { "key": "Content-Type", "value": "text/html" }
+        ]
+      },
+      {
+        "source": "/ads.txt",
+        "headers": [
+          { "key": "Cache-Control", "value": "public, max-age=3600" },
+          { "key": "Content-Type", "value": "text/plain; charset=utf-8" }
+        ]
+      }
+    ]
+  },
+  "firestore": {
+    "rules": "firestore.rules"
+  }
+}
