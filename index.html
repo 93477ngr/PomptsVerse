@@ -93,7 +93,7 @@
           <div class="flex items-center gap-1.5">
             <span id="site-brand-name" class="font-bold text-lg text-slate-900 tracking-tight group-hover:text-blue-600 transition">PromptVerse</span>
           </div>
-          <p id="site-brand-tagline" class="text-[11px] text-slate-500 hidden sm:block -mt-1 font-medium">Google for AI Prompts</p>
+          <p id="site-brand-tagline" class="text-[11px] text-slate-500 hidden sm:block -mt-1 font-medium">Discover & Share AI Prompts</p>
         </div>
       </div>
 
@@ -108,7 +108,7 @@
         <button onclick="scrollToSection('categories-section')" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition">
           <i data-lucide="layout-grid" class="w-4 h-4"></i> Categories
         </button>
-        <button onclick="scrollToSection('trending-section')" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition relative">
+        <button onclick="navigateTo('home'); filterBySort('trending')" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition relative">
           <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i> Trending
           <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
             <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
@@ -180,295 +180,123 @@
     <!-- HOME VIEW (DEFAULT) -->
     <div id="view-home" class="view-panel">
       
-      <!-- HERO SECTION WITH INTELLECTUAL NEURAL BACKGROUND -->
-      <section id="hero-section" class="relative pt-8 pb-12 lg:pt-12 lg:pb-16 overflow-hidden transition-all duration-700 bg-gradient-to-b from-blue-50/50 via-indigo-50/20 to-slate-50/50">
-        
-        <!-- NEURAL NETWORK CONNECTION LINES SVG BACKGROUND -->
-        <svg class="absolute inset-0 w-full h-full pointer-events-none z-0 opacity-40" xmlns="http://www.w3.org/2000/svg">
-          <g class="animate-neural">
-            <line x1="10%" y1="15%" x2="25%" y2="35%" stroke="#3b82f6" stroke-dasharray="4 4" />
-            <line x1="25%" y1="35%" x2="40%" y2="20%" stroke="#6366f1" stroke-dasharray="4 4" />
-            <line x1="40%" y1="20%" x2="60%" y2="30%" stroke="#8b5cf6" stroke-dasharray="4 4" />
-            <line x1="60%" y1="30%" x2="75%" y2="15%" stroke="#ec4899" stroke-dasharray="4 4" />
-            <line x1="75%" y1="15%" x2="90%" y2="35%" stroke="#3b82f6" stroke-dasharray="4 4" />
-            
-            <line x1="15%" y1="70%" x2="35%" y2="55%" stroke="#3b82f6" stroke-dasharray="3 3" />
-            <line x1="35%" y1="55%" x2="65%" y2="65%" stroke="#6366f1" stroke-dasharray="3 3" />
-            <line x1="65%" y1="65%" x2="85%" y2="50%" stroke="#10b981" stroke-dasharray="3 3" />
-            
-            <!-- Nodes -->
-            <circle cx="10%" cy="15%" r="3" fill="#3b82f6" />
-            <circle cx="25%" cy="35%" r="4" fill="#6366f1" />
-            <circle cx="40%" cy="20%" r="3" fill="#8b5cf6" />
-            <circle cx="60%" cy="30%" r="4.5" fill="#ec4899" />
-            <circle cx="75%" cy="15%" r="3.5" fill="#3b82f6" />
-            <circle cx="90%" cy="35%" r="3" fill="#10b981" />
-            <circle cx="35%" cy="55%" r="4" fill="#f59e0b" />
-            <circle cx="65%" cy="65%" r="3.5" fill="#6366f1" />
-          </g>
-        </svg>
-
-        <!-- Subtle Glow Orbs in Background -->
-        <div class="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[750px] h-[380px] bg-gradient-to-r from-blue-400/20 via-indigo-400/15 to-violet-400/20 blur-3xl pointer-events-none rounded-full animate-glow"></div>
-        
-        <!-- Animated Particles Background -->
-        <div class="absolute inset-0 pointer-events-none overflow-hidden opacity-70">
-          <div class="absolute top-12 left-1/4 w-2.5 h-2.5 rounded-full bg-blue-500/50 animate-particle-1"></div>
-          <div class="absolute top-32 right-1/4 w-3 h-3 rounded-full bg-indigo-500/40 animate-particle-2"></div>
-          <div class="absolute bottom-10 left-1/3 w-2 h-2 rounded-full bg-purple-500/50 animate-particle-1"></div>
-          <div class="absolute top-24 right-12 w-2.5 h-2.5 rounded-full bg-amber-500/50 animate-particle-2"></div>
-        </div>
-
-        <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
-          
-          <!-- Center Search Hero Box -->
-          <div class="max-w-3xl mx-auto text-center space-y-6 relative z-10">
-            
-            <!-- 13 FLOATING AI MODEL BADGES -->
-            <div id="hero-floating-badges" class="hidden sm:block pointer-events-auto">
-              <!-- Dynamically rendered by app.ts -->
-            </div>
-
-            <div class="space-y-3">
-              <div class="inline-block">
-                <span id="hero-event-badge" class="px-4 py-1.5 rounded-full text-xs font-bold bg-gradient-to-r from-blue-100 via-indigo-100 to-purple-100 text-blue-800 border border-blue-200/90 transition shadow-sm">
-                  ✨ The World's #1 AI Prompt Search Engine
-                </span>
-              </div>
-              <h1 id="hero-headline" class="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.15]">
-                <span class="text-blue-600">Google</span> for AI Prompts
-              </h1>
-              <p id="hero-subtitle" class="text-base sm:text-lg text-slate-600 font-normal max-w-xl mx-auto">
-                Discover, create and inspire across ChatGPT, Gemini, Claude, Midjourney, Flux, Ideogram, Leonardo, Sora & 140+ AI engines.
-              </p>
-            </div>
-
-            <!-- Main Premium Search Input Box with Animated Typewriter -->
-            <div class="relative max-w-2xl mx-auto group">
-              
-              <!-- Animated Typewriter Hint Indicator -->
-              <div class="flex items-center justify-between px-4 pb-1 text-xs">
-                <span class="text-slate-400 font-medium">Try searching:</span>
-                <div class="font-mono text-blue-600 font-semibold flex items-center gap-0.5">
-                  <span id="hero-typewriter-text">Create a Ganesh Chaturthi gold poster...</span>
-                  <span class="animate-pulse text-blue-600 font-bold">|</span>
-                </div>
-              </div>
-
-              <div class="relative bg-white rounded-full p-2 pl-6 shadow-xl shadow-blue-500/10 border border-slate-200/90 hover:border-blue-400 transition-all duration-300 flex items-center gap-2">
-                <i data-lucide="search" class="w-6 h-6 text-slate-400 group-hover:text-blue-600 transition shrink-0"></i>
-                <input 
-                  type="text" 
-                  id="hero-search-input" 
-                  placeholder="What do you want to create today?" 
-                  class="w-full bg-transparent text-slate-900 placeholder-slate-400 text-base sm:text-lg font-medium focus:outline-none"
-                  oninput="handleLiveSearchInput(this.value)"
-                  onfocus="handleLiveSearchInput(this.value)"
-                  onkeydown="if(event.key==='Enter') executeSearch()"
-                />
-                
-                <button 
-                  onclick="executeSearch()" 
-                  class="w-12 h-12 rounded-full bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center shadow-md shadow-blue-600/30 transition transform hover:scale-105 shrink-0 btn-shimmer"
-                  title="Search Prompts"
-                >
-                  <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                </button>
-              </div>
-
-              <!-- Autocomplete Dropdown Popup -->
-              <div id="search-autocomplete" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 text-left overflow-hidden z-50">
-                <div id="autocomplete-results" class="py-2"></div>
-              </div>
-            </div>
-
-            <!-- Dynamic Search Chips Row (populated by app.ts from Firestore seasonalCampaigns) -->
-            <div id="hero-popular-chips-wrapper" class="space-y-2 pt-1 text-xs sm:text-sm">
-              <div id="hero-popular-chips" class="flex flex-wrap items-center justify-center gap-2">
-                <!-- Dynamically populated by app.ts when a campaign is active -->
-              </div>
-            </div>
-
-          </div>
-        </div>
-      </section>
-
       <!-- CATEGORY PILLS ROW SECTION -->
-      <section id="categories-section" class="py-6 border-y border-slate-200/80 bg-white">
+      <section id="categories-section" class="py-5 border-b border-slate-200/80 bg-white">
         <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-sm font-bold uppercase tracking-wider text-slate-500">Popular Categories</h3>
+          <div class="flex items-center justify-between mb-2.5">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Popular Categories</h3>
             <button onclick="navigateTo('search')" class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-              View All 120+ Categories <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
+              View All Categories <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
             </button>
           </div>
 
           <!-- Horizontal Scroll Container -->
-          <div id="categories-container" class="flex items-center gap-3 overflow-x-auto pb-2 hide-scrollbar scroll-smooth">
+          <div id="categories-container" class="flex items-center gap-2.5 overflow-x-auto pb-1 hide-scrollbar scroll-smooth">
             <!-- Dynamic Category Pills Rendered by JS -->
           </div>
         </div>
       </section>
 
-
-
-      <!-- FESTIVAL & SEASONAL FEATURED BANNER -->
-      <section id="festive-special-banner-section" class="py-6 max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Dynamically rendered by app.ts -->
-      </section>
-
-      <!-- MAIN BENTO 3-COLUMN LAYOUT -->
-      <section class="py-8 max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+      <!-- FULL-WIDTH PROMPTS FEED (Covers 100% of the page width) -->
+      <section class="py-8 max-w-[1536px] w-full mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="space-y-6">
           
-          <!-- LEFT SIDEBAR: AI TOOLS LIST -->
-          <aside class="lg:col-span-2 space-y-6">
-            <div class="bg-white rounded-2xl p-4 border border-slate-200/80 shadow-card">
-              <div class="flex items-center justify-between mb-3 px-1">
-                <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Top AI Tools</h3>
-                <span class="text-[11px] text-blue-600 font-semibold cursor-pointer" onclick="filterByTool('all')">Reset</span>
-              </div>
-              <div id="ai-tools-list" class="space-y-1">
-                <!-- AI Tools items inserted here by JS -->
-              </div>
-            </div>
-
-            <!-- Promo CTA Card -->
-            <div class="bg-gradient-to-br from-blue-600 to-indigo-700 rounded-2xl p-5 text-white shadow-lg shadow-blue-600/20 relative overflow-hidden">
-              <div class="relative z-10 space-y-3">
-                <div class="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center text-amber-300">
-                  <i data-lucide="sparkles" class="w-5 h-5"></i>
-                </div>
-                <h4 class="font-bold text-base leading-snug">Create. Inspire. Repeat.</h4>
-                <p class="text-xs text-blue-100 leading-relaxed">Save prompts, build custom collections, and never lose inspiration again.</p>
-                <button onclick="openAuthModal('signup')" class="w-full py-2 bg-white text-blue-600 hover:bg-blue-50 font-bold text-xs rounded-xl shadow transition">
-                  Create Free Account
-                </button>
-              </div>
-            </div>
-          </aside>
-
-          <!-- MIDDLE MAIN CONTENT AREA -->
-          <div class="lg:col-span-7 space-y-8">
+          <!-- Gallery Controls & Search Toolbar -->
+          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
             
-            <!-- TRENDING THIS WEEK CAROUSEL/GRID -->
-            <div id="trending-section" class="space-y-4">
-              <div class="flex items-center justify-between">
-                <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center font-bold">
-                    <i data-lucide="flame" class="w-4 h-4"></i>
-                  </div>
-                  <div>
-                    <h2 class="text-xl font-bold text-slate-900">Trending This Week</h2>
-                    <p class="text-xs text-slate-500">Top prompts everyone is using right now</p>
-                  </div>
-                </div>
-                <button onclick="filterBySort('trending')" class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
-                  View All Trending <i data-lucide="chevron-right" class="w-4 h-4"></i>
-                </button>
-              </div>
-
-              <!-- Trending Grid Cards (5 Items) -->
-              <div id="trending-prompts-container" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-                <!-- Rendered dynamically by JS -->
-              </div>
+            <!-- Left: Title & Subtitle -->
+            <div class="shrink-0">
+              <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Prompt Inspiration Gallery</h1>
+              <p class="text-xs text-slate-500 mt-0.5 font-medium">Explore, copy, and create with community-shared AI prompts</p>
             </div>
 
-            <!-- PROMPT INSPIRATION GALLERY (MASONRY GRID) -->
-            <div class="space-y-5">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-200 pb-4">
-                <div>
-                  <h2 class="text-xl font-bold text-slate-900">Prompt Inspiration Gallery</h2>
-                  <p class="text-xs text-slate-500">Explore creative prompts from our community</p>
-                </div>
-
-                <!-- Gallery Controls Toolbar -->
-                <div class="flex items-center gap-2 flex-wrap">
-                  <select id="tool-filter-select" onchange="filterByTool(this.value)" class="text-xs font-semibold bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 focus:outline-none focus:border-blue-500">
-                    <option value="all">All AI Tools</option>
-                    <option value="ChatGPT">ChatGPT</option>
-                    <option value="Midjourney">Midjourney</option>
-                    <option value="Flux">Flux</option>
-                    <option value="Ideogram">Ideogram</option>
-                    <option value="Leonardo AI">Leonardo AI</option>
-                    <option value="Claude">Claude</option>
-                  </select>
-
-                  <select id="sort-select" onchange="filterBySort(this.value)" class="text-xs font-semibold bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-slate-700 focus:outline-none focus:border-blue-500">
-                    <option value="popular">Most Popular</option>
-                    <option value="newest">Newest First</option>
-                    <option value="likes">Most Liked</option>
-                    <option value="trending">Trending</option>
-                  </select>
-                </div>
-              </div>
-
-              <!-- Quick Tag Pills -->
-              <div id="gallery-tag-pills" class="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
-                <!-- Injected via JS -->
-              </div>
-
-              <!-- Prompts Grid Container (Compact, User-Friendly) -->
-              <div id="prompts-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-5">
-                <!-- Dynamically populated prompts -->
-              </div>
-
-              <!-- Pagination / Load More Button -->
-              <div class="text-center pt-6">
-                <button id="load-more-btn" onclick="loadMorePrompts()" class="px-6 py-2.5 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm border border-slate-200 shadow-sm transition">
-                  Load More Prompts
+            <!-- Middle / Right: Integrated Full Search Bar & Filters -->
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 flex-1 md:justify-end">
+              
+              <!-- Search Bar -->
+              <div class="relative flex-1 max-w-md group">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-blue-600 transition"></i>
+                <input 
+                  type="text" 
+                  id="hero-search-input" 
+                  placeholder="Search prompts by keyword, tool, style..." 
+                  class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white focus:bg-white text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm transition"
+                  oninput="handleLiveSearchInput(this.value)"
+                  onfocus="handleLiveSearchInput(this.value)"
+                  onkeydown="if(event.key==='Enter') executeSearch()"
+                />
+                <button 
+                  onclick="executeSearch()" 
+                  class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition"
+                  title="Search"
+                >
+                  <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                 </button>
+                <!-- Autocomplete Dropdown Popup -->
+                <div id="search-autocomplete" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 text-left overflow-hidden z-50">
+                  <div id="autocomplete-results" class="py-2"></div>
+                </div>
               </div>
-            </div>
 
+              <!-- Tool Filter Select -->
+              <select id="tool-filter-select" onchange="filterByTool(this.value)" class="text-xs font-semibold bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:border-blue-500 shadow-sm transition">
+                <option value="all">All AI Tools</option>
+                <option value="ChatGPT">ChatGPT</option>
+                <option value="Midjourney">Midjourney</option>
+                <option value="Flux">Flux</option>
+                <option value="Ideogram">Ideogram</option>
+                <option value="Leonardo AI">Leonardo AI</option>
+                <option value="Claude">Claude</option>
+              </select>
+
+              <!-- Sort Filter Select -->
+              <select id="sort-select" onchange="filterBySort(this.value)" class="text-xs font-semibold bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:border-blue-500 shadow-sm transition">
+                <option value="popular">Most Popular</option>
+                <option value="newest">Newest First</option>
+                <option value="likes">Most Liked</option>
+                <option value="trending">Trending</option>
+              </select>
+
+            </div>
           </div>
 
-          <!-- RIGHT SIDEBAR: POPULAR SEARCHES & COLLECTIONS -->
-          <aside class="lg:col-span-3 space-y-6">
-            
-            <!-- Popular Searches Box -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-card space-y-3">
-              <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold text-slate-900">Popular Searches</h3>
-                <span class="text-xs font-semibold text-blue-600 cursor-pointer" onclick="navigateTo('search')">View All</span>
-              </div>
-              <div class="space-y-2 text-sm" id="popular-searches-list">
-                <!-- Generated by JS -->
-              </div>
-            </div>
+          <!-- Quick Tag Pills -->
+          <div id="gallery-tag-pills" class="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
+            <!-- Injected via JS -->
+          </div>
 
-            <!-- Prompt Collections Box -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-card space-y-3">
-              <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold text-slate-900">Prompt Collections</h3>
-                <span class="text-xs font-semibold text-blue-600 cursor-pointer" onclick="navigateTo('collections')">View All</span>
-              </div>
-              <div class="space-y-3" id="featured-collections-list">
-                <!-- Generated by JS -->
-              </div>
-            </div>
+          <!-- FULL-WIDTH PROMPTS GRID (covers 100% of the page width) -->
+          <div id="prompts-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6 gap-5">
+            <!-- Dynamically populated prompts -->
+          </div>
 
-            <!-- Featured Blog Articles Box -->
-            <div class="bg-white rounded-2xl p-5 border border-slate-200/80 shadow-card space-y-3">
-              <div class="flex items-center justify-between">
-                <h3 class="text-sm font-bold text-slate-900">Featured Blogs</h3>
-                <span class="text-xs font-semibold text-blue-600 cursor-pointer" onclick="navigateTo('blog')">Read All</span>
-              </div>
-              <div class="space-y-3" id="homepage-featured-blogs">
-                <!-- Dynamically populated by app.ts -->
-                <div class="text-slate-400 text-xs text-center py-2">Loading articles...</div>
-              </div>
-            </div>
-
-            <!-- Community Discord / Telegram CTA -->
-            <div id="community-section-container" class="bg-slate-900 text-white rounded-2xl p-5 space-y-3 relative overflow-hidden">
-              <!-- Dynamically populated by app.ts -->
-            </div>
-
-          </aside>
+          <!-- Pagination / Load More Button -->
+          <div class="text-center pt-6">
+            <button id="load-more-btn" onclick="loadMorePrompts()" class="px-8 py-3 rounded-xl bg-white hover:bg-slate-50 text-slate-700 font-bold text-sm border border-slate-200 shadow-sm hover:shadow transition">
+              Load More Prompts
+            </button>
+          </div>
 
         </div>
       </section>
+
+      <!-- Hidden compatibility containers for background listeners -->
+      <div class="hidden" aria-hidden="true">
+        <div id="hero-section"></div>
+        <div id="hero-event-badge"></div>
+        <div id="hero-headline"></div>
+        <div id="hero-subtitle"></div>
+        <div id="hero-typewriter-text"></div>
+        <div id="hero-floating-badges"></div>
+        <div id="hero-popular-chips-wrapper"><div id="hero-popular-chips"></div></div>
+        <div id="festive-special-banner-section"></div>
+        <div id="trending-section"><div id="trending-prompts-container"></div></div>
+        <div id="ai-tools-list"></div>
+        <div id="popular-searches-list"></div>
+        <div id="featured-collections-list"></div>
+        <div id="homepage-featured-blogs"></div>
+        <div id="community-section-container"></div>
+      </div>
 
       <!-- BOTTOM STATS BANNER -->
       <section class="py-10 bg-white border-t border-slate-200/80">
