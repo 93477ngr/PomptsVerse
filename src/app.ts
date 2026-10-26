@@ -1282,8 +1282,6 @@ function handleHashRouting() {
     navigateTo('search');
   } else if (hash === '#collections') {
     navigateTo('collections');
-  } else if (hash === '#pricing') {
-    navigateTo('pricing');
   } else if (hash === '#blog') {
     navigateTo('blog');
   } else if (hash === '#docs') {
@@ -1336,7 +1334,6 @@ function navigateTo(viewName: string) {
     home: 'PromptsOne — Google for AI Prompts & Engineering Portal',
     search: 'Search Premium AI Prompts | PromptsOne',
     collections: 'Curated Prompt Collections | PromptsOne',
-    pricing: 'Simple, Transparent Pricing | PromptsOne',
     blog: 'Blog & Prompting Guides | PromptsOne',
     docs: 'Help Center & Documentation | PromptsOne',
     about: 'About Us | PromptsOne',

@@ -160,9 +160,6 @@
         <button onclick="navigateTo('collections')" id="nav-collections" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition">
           <i data-lucide="layers" class="w-4 h-4"></i> Collections
         </button>
-        <button onclick="navigateTo('pricing')" id="nav-pricing" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition">
-          <i data-lucide="badge-percent" class="w-4 h-4"></i> Pricing
-        </button>
         <button onclick="navigateTo('blog')" id="nav-blog" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition">
           <i data-lucide="book-open" class="w-4 h-4"></i> Blog
         </button>
@@ -422,62 +419,7 @@
       </div>
     </div>
 
-    <!-- PRICING VIEW -->
-    <div id="view-pricing" class="view-panel hidden py-12 max-w-5xl mx-auto px-4">
-      <div class="text-center space-y-4 mb-12">
-        <h1 class="text-3xl font-extrabold text-slate-900">Simple, Transparent Pricing</h1>
-        <p class="text-slate-600 max-w-xl mx-auto">Get unlimited access to millions of AI prompts, parameters, and prompt engineering tools.</p>
-      </div>
 
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
-        <!-- Free Plan -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-6">
-          <div>
-            <h3 class="font-bold text-lg">Starter</h3>
-            <p class="text-xs text-slate-500">For casual AI explorers</p>
-            <div class="mt-4 text-3xl font-extrabold">$0 <span class="text-xs font-normal text-slate-500">/ forever</span></div>
-          </div>
-          <ul class="space-y-3 text-sm text-slate-600">
-            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Access to Free Prompts</li>
-            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> One-click Copy</li>
-            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Save Bookmarks</li>
-          </ul>
-          <button onclick="openAuthModal('signup')" class="w-full py-2.5 rounded-xl border border-slate-300 font-bold text-sm hover:bg-slate-50">Get Started</button>
-        </div>
-
-        <!-- Pro Plan -->
-        <div class="bg-blue-600 text-white rounded-2xl p-6 shadow-xl relative space-y-6">
-          <span class="absolute top-4 right-4 bg-amber-300 text-slate-900 font-bold text-[10px] uppercase tracking-wider px-2 py-0.5 rounded">Most Popular</span>
-          <div>
-            <h3 class="font-bold text-lg">Pro Creator</h3>
-            <p class="text-xs text-blue-100">For professional designers & creators</p>
-            <div class="mt-4 text-3xl font-extrabold">$9.99 <span class="text-xs font-normal text-blue-200">/ month</span></div>
-          </div>
-          <ul class="space-y-3 text-sm text-blue-100">
-            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-white"></i> Unlimited Premium Prompts</li>
-            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-white"></i> Negative Prompts & Parameters</li>
-            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-white"></i> Download 8K Image Assets</li>
-            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-white"></i> High-Speed API Access</li>
-          </ul>
-          <button onclick="showToast('Redirecting to Stripe Checkout...')" class="w-full py-2.5 rounded-xl bg-white text-blue-600 font-bold text-sm hover:bg-blue-50 shadow-md">Start 7-Day Free Trial</button>
-        </div>
-
-        <!-- Enterprise Plan -->
-        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-6">
-          <div>
-            <h3 class="font-bold text-lg">Agency / Team</h3>
-            <p class="text-xs text-slate-500">For teams and enterprise workflows</p>
-            <div class="mt-4 text-3xl font-extrabold">$29.99 <span class="text-xs font-normal text-slate-500">/ month</span></div>
-          </div>
-          <ul class="space-y-3 text-sm text-slate-600">
-            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Everything in Pro</li>
-            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Up to 10 Team Seats</li>
-            <li class="flex items-center gap-2"><i data-lucide="check" class="w-4 h-4 text-emerald-500"></i> Private Collections</li>
-          </ul>
-          <button onclick="showToast('Contacting Sales Team...')" class="w-full py-2.5 rounded-xl border border-slate-300 font-bold text-sm hover:bg-slate-50">Contact Sales</button>
-        </div>
-      </div>
-    </div>
 
 
     <!-- DEDICATED PROMPT DETAILS PAGE VIEW -->
@@ -1114,7 +1056,6 @@
             <li><button onclick="navigateTo('home')" class="hover:text-white transition">Home</button></li>
             <li><button onclick="navigateTo('search')" class="hover:text-white transition">Search Prompts</button></li>
             <li><button onclick="navigateTo('collections')" class="hover:text-white transition">Collections</button></li>
-            <li><button onclick="navigateTo('pricing')" class="hover:text-white transition">Pricing Plans</button></li>
             <li><button onclick="navigateTo('blog')" class="hover:text-white transition">Blog</button></li>
           </ul>
         </div>
