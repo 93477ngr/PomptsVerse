@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
+Disallow: /admin
+Disallow: /admin.html
 
-Sitemap: https://promptsverse-ai.web.app/sitemap.xml
+Sitemap: https://promptsone.com/sitemap.xml

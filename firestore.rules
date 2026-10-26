@@ -65,6 +65,18 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Seasonal Campaigns (publicly readable, admin writable)
+    match /seasonalCampaigns/{campaignId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Search Analytics (publicly readable for top searches, admin writable)
+    match /searchAnalytics/{docId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Sponsored Ads Collection (publicly readable for ad rendering, admin writable)
     match /sponsoredAds/{adId} {
       allow read: if true;

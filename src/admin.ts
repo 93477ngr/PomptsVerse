@@ -328,6 +328,8 @@ function startCategoriesListener() {
   unsubCategories = onSnapshot(collection(db, 'categories'), (snap) => {
     allCategories = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) } as CategoryItem));
     updateCategorySelectOptions();
+  }, (err) => {
+    handleFirestoreError(err, OperationType.LIST, 'categories');
   });
 }
 
@@ -336,6 +338,8 @@ function startAIToolsListener() {
   unsubAITools = onSnapshot(collection(db, 'aiTools'), (snap) => {
     allAITools = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
     updateToolSelectOptions();
+  }, (err) => {
+    handleFirestoreError(err, OperationType.LIST, 'aiTools');
   });
 }
 
@@ -2154,7 +2158,7 @@ async function renderSettings() {
     ($('setting-seo-title') as HTMLInputElement).value = data.seoTitle || '';
     ($('setting-seo-keywords') as HTMLInputElement).value = data.searchKeywords || '';
     ($('setting-seo-desc') as HTMLTextAreaElement).value = data.metaDescription || '';
-    ($('setting-canonical-url') as HTMLInputElement).value = data.canonicalUrl || 'https://promptsverse-ai.web.app/';
+    ($('setting-canonical-url') as HTMLInputElement).value = data.canonicalUrl || 'https://promptsone.com/';
 
     ($('setting-og-title') as HTMLInputElement).value = data.ogTitle || '';
     ($('setting-twitter-card') as HTMLSelectElement).value = data.twitterCard || 'summary_large_image';

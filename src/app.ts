@@ -480,7 +480,7 @@ async function loadSiteConfigs() {
         helpers.setMeta('keywords', data.searchKeywords || '');
 
         // Canonical URL
-        const canonicalVal = data.canonicalUrl || 'https://promptsverse-ai.web.app/';
+        const canonicalVal = data.canonicalUrl || 'https://promptsone.com/';
         let canonicalEl = document.querySelector("link[rel='canonical']") as HTMLLinkElement | null;
         if (!canonicalEl && canonicalVal) {
           canonicalEl = document.createElement('link');
@@ -496,7 +496,7 @@ async function loadSiteConfigs() {
         helpers.setProperty('og:description', data.ogDescription || data.metaDescription || '');
         helpers.setProperty('og:image', data.ogImage || data.logoUrl || '');
         helpers.setProperty('og:url', canonicalVal);
-        helpers.setProperty('og:site_name', data.brandName || 'PromptVerse AI');
+        helpers.setProperty('og:site_name', data.brandName || 'PromptsOne');
 
         // Twitter Cards
         helpers.setMeta('twitter:card', data.twitterCard || 'summary_large_image');
@@ -541,6 +541,8 @@ async function loadSiteConfigs() {
           link.href = data.faviconUrl;
         }
       }
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, 'settings/site');
     });
 
     // 1. Hero
@@ -558,6 +560,8 @@ async function loadSiteConfigs() {
           typewriterPhrases = data.typewriterPhrases;
         }
       }
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, 'siteConfigs/hero');
     });
 
     // 2. Real-Time Dynamic Statistics Engine
@@ -569,6 +573,8 @@ async function loadSiteConfigs() {
         cachedStatsConfig = {};
       }
       renderRealtimeStatsBar(cachedStatsConfig);
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, 'siteConfigs/stats');
     });
 
     // 3. Seasonal Campaigns — live listener on 'seasonalCampaigns' collection
@@ -644,6 +650,8 @@ async function loadSiteConfigs() {
           chipsWrapper.classList.add('hidden');
         }
       }
+    }, (err) => {
+      handleFirestoreError(err, OperationType.LIST, 'seasonalCampaigns');
     });
 
     // 4. Community Section Configuration
@@ -673,6 +681,8 @@ async function loadSiteConfigs() {
         container.style.display = 'none';
       }
       if (typeof lucide !== 'undefined') lucide.createIcons();
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, 'siteConfigs/community');
     });
 
     // 5. Contact Desk Settings
@@ -726,6 +736,8 @@ async function loadSiteConfigs() {
         if (discordEl) discordEl.href = '#';
       }
       if (typeof lucide !== 'undefined') lucide.createIcons();
+    }, (err) => {
+      handleFirestoreError(err, OperationType.GET, 'settings/contact');
     });
   } catch (err) {
     console.warn('Error loading site configs:', err);
@@ -808,6 +820,8 @@ function loadAIToolsListener() {
     if (toolFilterSelect && toolsList.length > 0) toolFilterSelect.innerHTML = `<option value="all">All AI Tools</option>` + toolOptionsHtml;
 
     if (typeof lucide !== 'undefined') lucide.createIcons();
+  }, (err) => {
+    handleFirestoreError(err, OperationType.LIST, 'aiTools');
   });
 }
 
@@ -1319,19 +1333,35 @@ function navigateTo(viewName: string) {
 
   // Set proper SEO title for pages
   const titles: Record<string, string> = {
-    home: 'PromptVerse AI - Google for AI Prompts',
-    search: 'Search AI Prompts | PromptVerse AI',
-    collections: 'Curated Prompt Collections | PromptVerse AI',
-    pricing: 'Simple, Transparent Pricing | PromptVerse AI',
-    blog: 'Blog & Prompting Guides | PromptVerse AI',
-    docs: 'Help Center & Documentation | PromptVerse AI',
-    about: 'About Us | PromptVerse AI',
-    privacy: 'Privacy Policy | PromptVerse AI',
-    terms: 'Terms of Service | PromptVerse AI',
-    cookies: 'Cookie Policy | PromptVerse AI'
+    home: 'PromptsOne — Google for AI Prompts & Engineering Portal',
+    search: 'Search Premium AI Prompts | PromptsOne',
+    collections: 'Curated Prompt Collections | PromptsOne',
+    pricing: 'Simple, Transparent Pricing | PromptsOne',
+    blog: 'Blog & Prompting Guides | PromptsOne',
+    docs: 'Help Center & Documentation | PromptsOne',
+    about: 'About Us | PromptsOne',
+    privacy: 'Privacy Policy | PromptsOne',
+    terms: 'Terms of Service | PromptsOne',
+    cookies: 'Cookie Policy | PromptsOne',
+    contact: 'Contact & Support Desk | PromptsOne'
   };
   if (titles[viewName]) {
     document.title = titles[viewName];
+  }
+
+  // Sync canonical and og tags
+  const canonicalEl = document.querySelector("link[rel='canonical']") as HTMLLinkElement | null;
+  const canonicalBase = 'https://promptsone.com/';
+  if (canonicalEl) {
+    canonicalEl.href = viewName === 'home' ? canonicalBase : `${canonicalBase}#${viewName}`;
+  }
+  const ogUrl = document.querySelector("meta[property='og:url']");
+  if (ogUrl) {
+    ogUrl.setAttribute('content', viewName === 'home' ? canonicalBase : `${canonicalBase}#${viewName}`);
+  }
+  const ogTitle = document.querySelector("meta[property='og:title']");
+  if (ogTitle && titles[viewName]) {
+    ogTitle.setAttribute('content', titles[viewName]);
   }
 
   // Trigger dynamic data loaders
@@ -1660,7 +1690,7 @@ async function loadDocs() {
       contentHTML: `
         <div class="space-y-4">
           <p>Last Updated: August 2026</p>
-          <p>Welcome to PromptVerse AI ("we", "our", or "us"). We respect your privacy and are committed to protecting your personal data. This privacy policy describes how we collect, store, use, and process your information when you use our website <strong>https://promptsverse-ai.web.app/</strong>.</p>
+          <p>Welcome to PromptsOne ("we", "our", or "us"). We respect your privacy and are committed to protecting your personal data. This privacy policy describes how we collect, store, use, and process your information when you use our website <strong>https://promptsone.com/</strong>.</p>
           
           <h3 class="text-sm font-bold text-slate-800">1. Information We Collect</h3>
           <p>We collect information to provide better services to all our users:</p>
@@ -1686,11 +1716,11 @@ async function loadDocs() {
       contentHTML: `
         <div class="space-y-4">
           <p>Last Updated: August 2026</p>
-          <p>Welcome to PromptVerse AI. By accessing or using our platform at <strong>https://promptsverse-ai.web.app/</strong>, you agree to comply with and be bound by these Terms of Service.</p>
+          <p>Welcome to PromptsOne. By accessing or using our platform at <strong>https://promptsone.com/</strong>, you agree to comply with and be bound by these Terms of Service.</p>
           
           <h3 class="text-sm font-bold text-slate-800">1. Use License</h3>
-          <p>All prompts, modifiers, and prompt engineering blueprints published on PromptVerse AI are licensed under open-source parameters. You may copy, modify, and use these prompts for personal or commercial creative projects using AI generation engines like Midjourney, ChatGPT, Flux, and Claude.</p>
-
+          <p>All prompts, modifiers, and prompt engineering blueprints published on PromptsOne are licensed under open-source parameters. You may copy, modify, and use these prompts for personal or commercial creative projects using AI generation engines like Midjourney, ChatGPT, Flux, and Claude.</p>
+          
           <h3 class="text-sm font-bold text-slate-800">2. User Submissions</h3>
           <p>By submitting prompts to our platform, you warrant that the text and associated image assets do not violate any copyrights, trademarks, or intellectual property rights. You grant us a non-exclusive, worldwide, royalty-free license to host, display, and distribute your submissions.</p>
 
@@ -2203,6 +2233,23 @@ async function openPromptDetail(id: string, updateHash = true) {
   if (updateHash) window.location.hash = '#prompt/' + p.id;
 
   navigateTo('details');
+
+  // Dynamic SEO metadata for current prompt
+  document.title = `${p.title} — PromptsOne AI`;
+  const canonicalEl = document.querySelector("link[rel='canonical']") as HTMLLinkElement | null;
+  const promptUrl = `https://promptsone.com/#prompt/${p.id}`;
+  if (canonicalEl) canonicalEl.href = promptUrl;
+  const ogTitle = document.querySelector("meta[property='og:title']");
+  if (ogTitle) ogTitle.setAttribute('content', `${p.title} — PromptsOne`);
+  const ogUrl = document.querySelector("meta[property='og:url']");
+  if (ogUrl) ogUrl.setAttribute('content', promptUrl);
+  const ogDesc = document.querySelector("meta[property='og:description']");
+  const cleanSnippet = (p.prompt || '').slice(0, 150).replace(/"/g, "'");
+  if (ogDesc) ogDesc.setAttribute('content', cleanSnippet);
+  const metaDesc = document.querySelector("meta[name='description']");
+  if (metaDesc) metaDesc.setAttribute('content', `${p.title}: ${cleanSnippet}`);
+  const ogImg = document.querySelector("meta[property='og:image']");
+  if (ogImg && p.image) ogImg.setAttribute('content', p.image);
 
   // Populate all detail page elements
   const set = (id: string, val: string) => { const el = document.getElementById(id); if (el) el.innerText = val; };
