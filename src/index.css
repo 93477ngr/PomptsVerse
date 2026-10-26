@@ -1,17 +1,184 @@
+/* =============================================================================
+   BRAND THEME & DESIGN SYSTEM TOKENS
+   ============================================================================= */
+:root {
+  /* Background Colors */
+  --bg: #f4f7f5;
+  --card-bg: #ffffff;
+  --green-pale: #e8f5ec;
+  --yellow-light: #fff9e6;
+  --orange-light: #fff2eb;
+
+  /* Theme & Brand Colors */
+  --green: #2d8a45;
+  --green-dark: #1a5c2a;
+  --yellow: #f5c518;
+  --yellow-hover: #e5b800;
+  
+  /* Dark Orange Accent (Hot / Trending / Highlights) */
+  --dark-orange: #d95d1e;
+  --orange-dark: #b8430e;
+
+  /* Typography Colors */
+  --text-primary: #1a2e1e;
+  --text-secondary: #5a7260;
+  --text-muted: #9ab09e;
+
+  /* System Borders & Validation */
+  --border: #dde8df;
+  --er: #c0392b;
+
+  /* Social Colors */
+  --wa-teal: #128C7E;
+  --wa-green: #25D366;
+
+  /* Brand Gradients */
+  --hero-gradient: linear-gradient(135deg, #e8f5ec 0%, #fff9e6 100%);
+  --cta-gradient: linear-gradient(135deg, #1a5c2a 0%, #2d8a45 100%);
+  --orange-gradient: linear-gradient(135deg, #d95d1e 0%, #b8430e 100%);
+}
+
+/* Base Body Styles */
+body {
+  background-color: var(--bg);
+  color: var(--text-primary);
+}
+
+/* Background Gradients */
+.bg-hero-gradient {
+  background: var(--hero-gradient);
+}
+.bg-cta-gradient {
+  background: var(--cta-gradient);
+}
+.bg-orange-gradient {
+  background: var(--orange-gradient);
+}
+
+/* Button Colors */
+.btn-brand-primary {
+  background-color: #2d8a45;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+.btn-brand-primary:hover {
+  background-color: #1a5c2a;
+}
+
+.btn-brand-yellow {
+  background-color: #f5c518;
+  color: #1a5c2a;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.btn-brand-yellow:hover {
+  background-color: #e5b800;
+}
+
+.btn-brand-orange {
+  background-color: #d95d1e;
+  color: #ffffff;
+  font-weight: 700;
+  transition: all 0.2s ease;
+}
+.btn-brand-orange:hover {
+  background-color: #b8430e;
+}
+
+.btn-brand-outline {
+  background-color: transparent;
+  border: 1px solid #dde8df;
+  color: #5a7260;
+  transition: all 0.2s ease;
+}
+.btn-brand-outline:hover {
+  color: #2d8a45;
+  border-color: #2d8a45;
+  background-color: #e8f5ec;
+}
+
+.btn-whatsapp {
+  background: linear-gradient(135deg, #128C7E, #25D366);
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+.btn-whatsapp:hover {
+  filter: brightness(1.08);
+}
+
+/* Badge Utilities */
+.badge-hot-orange {
+  background-color: #fff2eb;
+  color: #d95d1e;
+  border: 1px solid #fcdad0;
+}
+.badge-brand-green {
+  background-color: #e8f5ec;
+  color: #1a5c2a;
+  border: 1px solid #cce8d4;
+}
+.badge-brand-yellow {
+  background-color: #fff9e6;
+  color: #8c6e00;
+  border: 1px solid #fae8a8;
+}
+
+/* Card Preview Studio Palettes */
+.palette-mana-green {
+  --palette-accent: #2d8a45;
+  --palette-bg: #f4f7f5;
+  --palette-text: #1a2e1e;
+  background-color: var(--palette-bg);
+  color: var(--palette-text);
+  border-color: #dde8df;
+}
+.palette-badgebee {
+  --palette-accent: #f5c518;
+  --palette-bg: #ffffff;
+  --palette-text: #171B24;
+  background-color: var(--palette-bg);
+  color: var(--palette-text);
+  border-color: #fae8a8;
+}
+.palette-warm-cream {
+  --palette-accent: #E8B923;
+  --palette-bg: #FFF8E7;
+  --palette-text: #3B2F1E;
+  background-color: var(--palette-bg);
+  color: var(--palette-text);
+  border-color: #f7e6b8;
+}
+.palette-fresh-green {
+  --palette-accent: #16834A;
+  --palette-bg: #F1FBF4;
+  --palette-text: #12301F;
+  background-color: var(--palette-bg);
+  color: var(--palette-text);
+  border-color: #caeed3;
+}
+.palette-dark-orange {
+  --palette-accent: #d95d1e;
+  --palette-bg: #fff8f5;
+  --palette-text: #3d1b0d;
+  background-color: var(--palette-bg);
+  color: var(--palette-text);
+  border-color: #fcdad0;
+}
+
 /* Custom Scrollbar & Utility Animations */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f8fafc;
+  background: #f4f7f5;
 }
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1;
+  background: #dde8df;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8;
+  background: #9ab09e;
 }
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
@@ -21,23 +188,29 @@
   scrollbar-width: none;
 }
 .glass-effect {
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
+  border-bottom: 1px solid #dde8df;
 }
 .glass-badge {
-  background: rgba(255, 255, 255, 0.92);
+  background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid rgba(226, 232, 240, 0.9);
+  border: 1px solid #dde8df;
 }
 .gradient-text {
-  background: linear-gradient(135deg, #2563eb 0%, #7c3aed 100%);
+  background: linear-gradient(135deg, #1a5c2a 0%, #2d8a45 60%, #d95d1e 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .gradient-text-gold {
-  background: linear-gradient(135deg, #f59e0b 0%, #d97706 50%, #b45309 100%);
+  background: linear-gradient(135deg, #f5c518 0%, #d95d1e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+.gradient-text-orange {
+  background: linear-gradient(135deg, #d95d1e 0%, #b8430e 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

@@ -96,19 +96,36 @@
           },
           colors: {
             brand: {
-              50: '#f0f6ff',
-              100: '#e0edff',
-              500: '#2563eb',
-              600: '#1d4ed8',
-              700: '#1e40af',
-              900: '#0f172a',
+              DEFAULT: '#2d8a45',
+              green: '#2d8a45',
+              'green-dark': '#1a5c2a',
+              'green-pale': '#e8f5ec',
+              yellow: '#f5c518',
+              'yellow-light': '#fff9e6',
+              'yellow-hover': '#e5b800',
+              orange: '#d95d1e',
+              'orange-dark': '#b8430e',
+              'orange-light': '#fff2eb',
+              bg: '#f4f7f5',
+              card: '#ffffff',
+              border: '#dde8df',
+              text: '#1a2e1e',
+              'text-sec': '#5a7260',
+              'text-muted': '#9ab09e',
+              error: '#c0392b',
+              50: '#e8f5ec',
+              100: '#cce8d4',
+              500: '#2d8a45',
+              600: '#227236',
+              700: '#1a5c2a',
+              900: '#1a2e1e',
             }
           },
           boxShadow: {
-            'glass': '0 8px 32px 0 rgba(31, 38, 135, 0.07)',
-            'card': '0 4px 20px -2px rgba(0, 0, 0, 0.05)',
-            'card-hover': '0 12px 30px -4px rgba(37, 99, 235, 0.12)',
-            'floating': '0 20px 40px -15px rgba(0, 0, 0, 0.08)',
+            'glass': '0 8px 32px 0 rgba(26, 92, 42, 0.06)',
+            'card': '0 4px 20px -2px rgba(26, 46, 30, 0.04)',
+            'card-hover': '0 12px 30px -4px rgba(45, 138, 69, 0.16)',
+            'floating': '0 20px 40px -15px rgba(26, 92, 42, 0.08)',
           }
         }
       }
@@ -117,10 +134,10 @@
   <!-- Core custom stylesheet -->
   <link rel="stylesheet" href="/src/index.css">
 </head>
-<body class="bg-[#f8fafc] text-slate-800 antialiased font-sans min-h-screen flex flex-col selection:bg-blue-100 selection:text-blue-700 relative overflow-x-hidden">
+<body class="bg-[#f4f7f5] text-[#1a2e1e] antialiased font-sans min-h-screen flex flex-col selection:bg-[#e8f5ec] selection:text-[#1a5c2a] relative overflow-x-hidden">
 
   <!-- AMBIENT CURSOR GLOW POINTER EFFECT -->
-  <div id="cursor-glow" class="fixed top-0 left-0 w-[240px] h-[240px] rounded-full bg-gradient-to-r from-blue-500/15 via-indigo-500/15 to-violet-500/15 blur-3xl pointer-events-none z-50 transition-transform duration-100 ease-out"></div>
+  <div id="cursor-glow" class="fixed top-0 left-0 w-[240px] h-[240px] rounded-full bg-gradient-to-r from-[#2d8a45]/15 via-[#f5c518]/15 to-[#d95d1e]/15 blur-3xl pointer-events-none z-50 transition-transform duration-100 ease-out"></div>
 
   <!-- TOP STICKY NAVBAR -->
   <header class="sticky top-0 z-40 w-full glass-effect border-b border-slate-200/80 transition-all duration-200">
@@ -128,42 +145,43 @@
       
       <!-- Brand Logo -->
       <div class="flex items-center gap-3 cursor-pointer group" onclick="navigateTo('home')">
-        <div id="site-logo-container" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-500 flex items-center justify-center text-white font-extrabold text-xl animate-logo transition duration-300 group-hover:scale-105">
+        <div id="site-logo-container" class="w-10 h-10 rounded-xl bg-gradient-to-tr from-[#1a5c2a] via-[#2d8a45] to-[#f5c518] flex items-center justify-center text-white font-extrabold text-xl animate-logo transition duration-300 group-hover:scale-105 shadow-md shadow-[#2d8a45]/20">
           P
         </div>
         <div>
           <div class="flex items-center gap-1.5">
-            <span id="site-brand-name" class="font-bold text-lg text-slate-900 tracking-tight group-hover:text-blue-600 transition">PromptsOne</span>
+            <span id="site-brand-name" class="font-extrabold text-lg text-[#1a2e1e] tracking-tight group-hover:text-[#2d8a45] transition">PromptsOne</span>
+            <span class="w-2 h-2 rounded-full bg-[#f5c518]"></span>
           </div>
-          <p id="site-brand-tagline" class="text-[11px] text-slate-500 hidden sm:block -mt-1 font-medium">Google for AI Prompts</p>
+          <p id="site-brand-tagline" class="text-[11px] text-[#5a7260] hidden sm:block -mt-1 font-medium">Google for AI Prompts</p>
         </div>
       </div>
 
       <!-- Navigation Links with Magnetic Underline -->
       <nav class="hidden lg:flex items-center gap-1 text-sm font-medium">
-        <button onclick="navigateTo('home')" id="nav-home" class="nav-btn px-3.5 py-2 rounded-lg bg-blue-50 text-blue-600 font-semibold flex items-center gap-2 transition">
+        <button onclick="navigateTo('home')" id="nav-home" class="nav-btn px-3.5 py-2 rounded-lg bg-[#e8f5ec] text-[#1a5c2a] font-bold flex items-center gap-2 transition">
           <i data-lucide="home" class="w-4 h-4"></i> Home
         </button>
-        <button onclick="navigateTo('search')" id="nav-search" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition">
+        <button onclick="navigateTo('search')" id="nav-search" class="nav-btn px-3.5 py-2 rounded-lg text-[#5a7260] hover:text-[#1a2e1e] hover:bg-[#e8f5ec]/70 flex items-center gap-2 transition">
           <i data-lucide="search" class="w-4 h-4"></i> Search
         </button>
-        <button onclick="scrollToSection('categories-section')" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition">
+        <button onclick="scrollToSection('categories-section')" class="nav-btn px-3.5 py-2 rounded-lg text-[#5a7260] hover:text-[#1a2e1e] hover:bg-[#e8f5ec]/70 flex items-center gap-2 transition">
           <i data-lucide="layout-grid" class="w-4 h-4"></i> Categories
         </button>
-        <button onclick="navigateTo('home'); filterBySort('trending')" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition relative">
-          <i data-lucide="sparkles" class="w-4 h-4 text-amber-500"></i> Trending
+        <button onclick="navigateTo('home'); filterBySort('trending')" class="nav-btn px-3.5 py-2 rounded-lg text-[#d95d1e] hover:bg-[#fff2eb] flex items-center gap-2 transition relative font-semibold">
+          <i data-lucide="sparkles" class="w-4 h-4 text-[#f5c518]"></i> Trending
           <span class="absolute -top-1 -right-1 flex h-2.5 w-2.5">
-            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-amber-400 opacity-75"></span>
-            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-amber-500"></span>
+            <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-[#d95d1e] opacity-75"></span>
+            <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#d95d1e]"></span>
           </span>
         </button>
-        <button onclick="navigateTo('collections')" id="nav-collections" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition">
+        <button onclick="navigateTo('collections')" id="nav-collections" class="nav-btn px-3.5 py-2 rounded-lg text-[#5a7260] hover:text-[#1a2e1e] hover:bg-[#e8f5ec]/70 flex items-center gap-2 transition">
           <i data-lucide="layers" class="w-4 h-4"></i> Collections
         </button>
-        <button onclick="navigateTo('blog')" id="nav-blog" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition">
+        <button onclick="navigateTo('blog')" id="nav-blog" class="nav-btn px-3.5 py-2 rounded-lg text-[#5a7260] hover:text-[#1a2e1e] hover:bg-[#e8f5ec]/70 flex items-center gap-2 transition">
           <i data-lucide="book-open" class="w-4 h-4"></i> Blog
         </button>
-        <button onclick="navigateTo('contact')" id="nav-contact" class="nav-btn px-3.5 py-2 rounded-lg text-slate-600 hover:text-slate-900 hover:bg-slate-100/80 flex items-center gap-2 transition">
+        <button onclick="navigateTo('contact')" id="nav-contact" class="nav-btn px-3.5 py-2 rounded-lg text-[#5a7260] hover:text-[#1a2e1e] hover:bg-[#e8f5ec]/70 flex items-center gap-2 transition">
           <i data-lucide="mail" class="w-4 h-4"></i> Contact
         </button>
       </nav>
@@ -174,10 +192,10 @@
 
         <!-- Auth Buttons -->
         <div id="navbar-auth-section" class="flex items-center gap-2">
-          <button onclick="openAuthModal('login')" class="px-3.5 py-2 text-sm font-semibold text-slate-700 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition">
+          <button onclick="openAuthModal('login')" class="px-3.5 py-2 text-sm font-semibold text-[#5a7260] hover:text-[#1a2e1e] hover:bg-[#e8f5ec]/60 rounded-lg transition">
             Login
           </button>
-          <button onclick="openAuthModal('signup')" class="px-4 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm shadow-blue-500/30 transition flex items-center gap-1.5 btn-shimmer">
+          <button onclick="openAuthModal('signup')" class="px-4 py-2 text-sm font-bold text-white bg-[#2d8a45] hover:bg-[#1a5c2a] rounded-lg shadow-sm shadow-[#2d8a45]/30 transition flex items-center gap-1.5 btn-shimmer">
             Sign Up
           </button>
         </div>
@@ -220,11 +238,11 @@
     <div id="view-home" class="view-panel">
       
       <!-- CATEGORY PILLS ROW SECTION -->
-      <section id="categories-section" class="py-5 border-b border-slate-200/80 bg-white">
+      <section id="categories-section" class="py-5 border-b border-[#dde8df] bg-white">
         <div class="max-w-[1536px] mx-auto px-4 sm:px-6 lg:px-8">
           <div class="flex items-center justify-between mb-2.5">
-            <h3 class="text-xs font-bold uppercase tracking-wider text-slate-500">Popular Categories</h3>
-            <button onclick="navigateTo('search')" class="text-xs font-semibold text-blue-600 hover:text-blue-700 flex items-center gap-1">
+            <h3 class="text-xs font-bold uppercase tracking-wider text-[#5a7260]">Popular Categories</h3>
+            <button onclick="navigateTo('search')" class="text-xs font-bold text-[#2d8a45] hover:text-[#1a5c2a] flex items-center gap-1 transition">
               View All Categories <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
             </button>
           </div>
@@ -241,12 +259,12 @@
         <div class="space-y-6">
           
           <!-- Gallery Controls & Search Toolbar -->
-          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-slate-200/90 shadow-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
+          <div class="bg-white rounded-2xl p-4 sm:p-5 border border-[#dde8df] shadow-card flex flex-col md:flex-row items-stretch md:items-center justify-between gap-4">
             
             <!-- Left: Title & Subtitle -->
             <div class="shrink-0">
-              <h1 class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">Prompt Inspiration Gallery</h1>
-              <p class="text-xs text-slate-500 mt-0.5 font-medium">Explore, copy, and create with community-shared AI prompts</p>
+              <h1 class="text-xl sm:text-2xl font-extrabold text-[#1a2e1e] tracking-tight">Prompt Inspiration Gallery</h1>
+              <p class="text-xs text-[#5a7260] mt-0.5 font-medium">Explore, copy, and create with community-shared AI prompts</p>
             </div>
 
             <!-- Middle / Right: Integrated Full Search Bar & Filters -->
@@ -254,31 +272,31 @@
               
               <!-- Search Bar -->
               <div class="relative flex-1 max-w-md group">
-                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-blue-600 transition"></i>
+                <i data-lucide="search" class="w-4 h-4 text-[#9ab09e] absolute left-3.5 top-1/2 -translate-y-1/2 group-focus-within:text-[#2d8a45] transition"></i>
                 <input 
                   type="text" 
                   id="hero-search-input" 
                   placeholder="Search prompts by keyword, tool, style..." 
-                  class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-slate-200 bg-slate-50 hover:bg-white focus:bg-white text-xs sm:text-sm text-slate-900 placeholder-slate-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-100 shadow-sm transition"
+                  class="w-full pl-10 pr-10 py-2.5 rounded-xl border border-[#dde8df] bg-[#f4f7f5] hover:bg-white focus:bg-white text-xs sm:text-sm text-[#1a2e1e] placeholder-[#9ab09e] focus:outline-none focus:border-[#2d8a45] focus:ring-2 focus:ring-[#e8f5ec] shadow-sm transition"
                   oninput="handleLiveSearchInput(this.value)"
                   onfocus="handleLiveSearchInput(this.value)"
                   onkeydown="if(event.key==='Enter') executeSearch()"
                 />
                 <button 
                   onclick="executeSearch()" 
-                  class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition"
+                  class="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-lg bg-[#2d8a45] hover:bg-[#1a5c2a] text-white flex items-center justify-center transition shadow-sm"
                   title="Search"
                 >
                   <i data-lucide="arrow-right" class="w-3.5 h-3.5"></i>
                 </button>
                 <!-- Autocomplete Dropdown Popup -->
-                <div id="search-autocomplete" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-slate-200 text-left overflow-hidden z-50">
+                <div id="search-autocomplete" class="hidden absolute top-full left-0 right-0 mt-2 bg-white rounded-2xl shadow-2xl border border-[#dde8df] text-left overflow-hidden z-50">
                   <div id="autocomplete-results" class="py-2"></div>
                 </div>
               </div>
 
               <!-- Tool Filter Select -->
-              <select id="tool-filter-select" onchange="filterByTool(this.value)" class="text-xs font-semibold bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:border-blue-500 shadow-sm transition">
+              <select id="tool-filter-select" onchange="filterByTool(this.value)" class="text-xs font-semibold bg-[#f4f7f5] hover:bg-white border border-[#dde8df] rounded-xl px-3.5 py-2.5 text-[#1a2e1e] focus:outline-none focus:border-[#2d8a45] shadow-sm transition">
                 <option value="all">All AI Tools</option>
                 <option value="ChatGPT">ChatGPT</option>
                 <option value="Midjourney">Midjourney</option>
@@ -289,11 +307,11 @@
               </select>
 
               <!-- Sort Filter Select -->
-              <select id="sort-select" onchange="filterBySort(this.value)" class="text-xs font-semibold bg-slate-50 hover:bg-white border border-slate-200 rounded-xl px-3.5 py-2.5 text-slate-700 focus:outline-none focus:border-blue-500 shadow-sm transition">
+              <select id="sort-select" onchange="filterBySort(this.value)" class="text-xs font-semibold bg-[#f4f7f5] hover:bg-white border border-[#dde8df] rounded-xl px-3.5 py-2.5 text-[#1a2e1e] focus:outline-none focus:border-[#2d8a45] shadow-sm transition">
                 <option value="popular">Most Popular</option>
                 <option value="newest">Newest First</option>
                 <option value="likes">Most Liked</option>
-                <option value="trending">Trending</option>
+                <option value="trending">Trending 🔥</option>
               </select>
 
             </div>
@@ -474,49 +492,49 @@
                   <div class="space-y-3">
                     <!-- Badges -->
                     <div class="flex items-center gap-2 flex-wrap">
-                      <span id="detail-tool-badge" class="px-3 py-1 rounded-lg text-xs font-extrabold bg-blue-100 text-blue-700 flex items-center gap-1.5 shadow-sm">
-                        <i data-lucide="sparkles" class="w-3.5 h-3.5"></i> <span id="detail-tool-text">ChatGPT</span>
+                      <span id="detail-tool-badge" class="px-3 py-1 rounded-lg text-xs font-extrabold bg-[#e8f5ec] text-[#1a5c2a] border border-[#dde8df] flex items-center gap-1.5 shadow-sm">
+                        <i data-lucide="sparkles" class="w-3.5 h-3.5 text-[#f5c518]"></i> <span id="detail-tool-text">ChatGPT</span>
                       </span>
-                      <span id="detail-category-badge" class="px-3 py-1 rounded-lg text-xs font-bold bg-slate-100 text-slate-700">
+                      <span id="detail-category-badge" class="px-3 py-1 rounded-lg text-xs font-bold bg-[#fff9e6] text-[#8c6e00] border border-[#fae8a8]">
                         Category
                       </span>
-                      <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 flex items-center gap-1">
-                        <i data-lucide="check-circle-2" class="w-3 h-3 text-emerald-600"></i> Verified Prompt
+                      <span class="px-2.5 py-1 rounded-lg text-[11px] font-bold bg-[#e8f5ec] text-[#1a5c2a] border border-[#cce8d4] flex items-center gap-1">
+                        <i data-lucide="check-circle-2" class="w-3 h-3 text-[#2d8a45]"></i> Verified Prompt
                       </span>
                     </div>
 
                     <!-- Title -->
-                    <h1 id="detail-title" class="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight">Prompt Title</h1>
+                    <h1 id="detail-title" class="text-2xl sm:text-3xl font-extrabold text-[#1a2e1e] leading-tight">Prompt Title</h1>
 
                     <!-- Creator & Date Bar -->
-                    <div class="flex items-center justify-between pt-2 pb-3 border-b border-slate-100">
+                    <div class="flex items-center justify-between pt-2 pb-3 border-b border-[#dde8df]">
                       <div class="flex items-center gap-3">
-                        <div id="detail-creator-avatar" class="w-10 h-10 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white font-extrabold flex items-center justify-center text-sm shadow-sm">
+                        <div id="detail-creator-avatar" class="w-10 h-10 rounded-full bg-gradient-to-tr from-[#1a5c2a] via-[#2d8a45] to-[#f5c518] text-white font-extrabold flex items-center justify-center text-sm shadow-sm">
                           C
                         </div>
                         <div>
                           <div class="flex items-center gap-1.5">
-                            <span id="detail-creator-name" class="font-bold text-sm text-slate-900">Creator Name</span>
-                            <i data-lucide="badge-check" class="w-4 h-4 text-blue-500"></i>
+                            <span id="detail-creator-name" class="font-bold text-sm text-[#1a2e1e]">Creator Name</span>
+                            <i data-lucide="badge-check" class="w-4 h-4 text-[#2d8a45]"></i>
                           </div>
-                          <p class="text-[11px] text-slate-400 font-medium">Prompt Engineer • Published <span id="detail-date">Jul 2026</span></p>
+                          <p class="text-[11px] text-[#5a7260] font-medium">Prompt Engineer • Published <span id="detail-date">Jul 2026</span></p>
                         </div>
                       </div>
                     </div>
 
                     <!-- Views / Likes / Downloads Stats Bar -->
-                    <div class="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-slate-50 border border-slate-100 text-center">
+                    <div class="grid grid-cols-3 gap-2 p-3 rounded-2xl bg-[#f4f7f5] border border-[#dde8df] text-center">
                       <div>
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Views</span>
-                        <span id="detail-views" class="text-sm font-extrabold text-slate-800 flex items-center justify-center gap-1 mt-0.5"><i data-lucide="eye" class="w-3.5 h-3.5 text-blue-500"></i> 18.5k</span>
+                        <span class="text-[10px] text-[#5a7260] font-bold uppercase tracking-wider block">Total Views</span>
+                        <span id="detail-views" class="text-sm font-extrabold text-[#1a2e1e] flex items-center justify-center gap-1 mt-0.5"><i data-lucide="eye" class="w-3.5 h-3.5 text-[#2d8a45]"></i> 18.5k</span>
                       </div>
-                      <div class="border-x border-slate-200/80">
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Total Likes</span>
-                        <span id="detail-likes" class="text-sm font-extrabold text-slate-800 flex items-center justify-center gap-1 mt-0.5"><i data-lucide="heart" class="w-3.5 h-3.5 text-rose-500"></i> 3.2k</span>
+                      <div class="border-x border-[#dde8df]">
+                        <span class="text-[10px] text-[#5a7260] font-bold uppercase tracking-wider block">Total Likes</span>
+                        <span id="detail-likes" class="text-sm font-extrabold text-[#1a2e1e] flex items-center justify-center gap-1 mt-0.5"><i data-lucide="heart" class="w-3.5 h-3.5 text-[#d95d1e]"></i> 3.2k</span>
                       </div>
                       <div>
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider block">Downloads</span>
-                        <span id="detail-downloads" class="text-sm font-extrabold text-slate-800 flex items-center justify-center gap-1 mt-0.5"><i data-lucide="download" class="w-3.5 h-3.5 text-emerald-500"></i> 1.4k</span>
+                        <span class="text-[10px] text-[#5a7260] font-bold uppercase tracking-wider block">Downloads</span>
+                        <span id="detail-downloads" class="text-sm font-extrabold text-[#1a2e1e] flex items-center justify-center gap-1 mt-0.5"><i data-lucide="download" class="w-3.5 h-3.5 text-[#1a5c2a]"></i> 1.4k</span>
                       </div>
                     </div>
 
@@ -527,24 +545,27 @@
                   </div>
 
                   <!-- Main Hero Action Buttons -->
-                  <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 pt-2">
-                    <button onclick="copyCurrentDetailPrompt()" class="col-span-2 sm:col-span-1 px-3 py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-extrabold text-xs rounded-2xl shadow-md shadow-blue-500/20 flex items-center justify-center gap-1.5 transition transform active:scale-95">
+                  <div class="grid grid-cols-2 sm:grid-cols-6 gap-2 pt-2">
+                    <button onclick="copyCurrentDetailPrompt()" class="col-span-2 sm:col-span-1 px-3 py-2.5 bg-[#2d8a45] hover:bg-[#1a5c2a] text-white font-extrabold text-xs rounded-2xl shadow-md shadow-[#2d8a45]/20 flex items-center justify-center gap-1.5 transition transform active:scale-95">
                       <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
                     </button>
-                    <button id="detail-like-btn" onclick="toggleLikeCurrent()" class="px-3 py-2.5 bg-rose-50 hover:bg-rose-100 text-rose-600 border border-rose-200 font-bold text-xs rounded-2xl flex items-center justify-center gap-1.5 transition shadow-sm">
-                      <i data-lucide="heart" class="w-3.5 h-3.5"></i> Like
+                    <button id="detail-like-btn" onclick="toggleLikeCurrent()" class="px-3 py-2.5 bg-[#fff2eb] hover:bg-[#ffe5d9] text-[#d95d1e] border border-[#fcdad0] font-bold text-xs rounded-2xl flex items-center justify-center gap-1.5 transition shadow-sm">
+                      <i data-lucide="heart" class="w-3.5 h-3.5 text-[#d95d1e]"></i> Like
                     </button>
-                    <button id="detail-bookmark-btn" onclick="toggleBookmarkCurrentDetail()" class="px-3 py-2.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold text-xs rounded-2xl flex items-center justify-center gap-1.5 transition shadow-sm">
-                      <i data-lucide="bookmark" class="w-3.5 h-3.5 text-amber-500"></i> Save
+                    <button id="detail-bookmark-btn" onclick="toggleBookmarkCurrentDetail()" class="px-3 py-2.5 bg-[#fff9e6] hover:bg-[#fff2cc] text-[#8c6e00] border border-[#fae8a8] font-bold text-xs rounded-2xl flex items-center justify-center gap-1.5 transition shadow-sm">
+                      <i data-lucide="bookmark" class="w-3.5 h-3.5 text-[#f5c518]"></i> Save
                     </button>
-                    <button onclick="downloadCurrentPrompt()" class="px-3 py-2.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold text-xs rounded-2xl flex items-center justify-center gap-1.5 transition shadow-sm">
-                      <i data-lucide="download" class="w-3.5 h-3.5 text-emerald-500"></i> Download
+                    <button onclick="shareOnWhatsApp()" class="px-3 py-2.5 bg-[#25D366] hover:bg-[#128C7E] text-white font-bold text-xs rounded-2xl flex items-center justify-center gap-1.5 transition shadow-sm" title="Share on WhatsApp">
+                      <i data-lucide="message-circle" class="w-3.5 h-3.5"></i> WhatsApp
                     </button>
-                    <button onclick="shareCurrentDetailPrompt()" class="px-3 py-2.5 bg-white hover:bg-slate-50 text-slate-800 border border-slate-200 font-bold text-xs rounded-2xl flex items-center justify-center gap-1.5 transition shadow-sm">
-                      <i data-lucide="share-2" class="w-3.5 h-3.5 text-indigo-500"></i> Share
+                    <button onclick="downloadCurrentPrompt()" class="px-3 py-2.5 bg-white hover:bg-[#e8f5ec] text-[#1a2e1e] border border-[#dde8df] font-bold text-xs rounded-2xl flex items-center justify-center gap-1.5 transition shadow-sm">
+                      <i data-lucide="download" class="w-3.5 h-3.5 text-[#2d8a45]"></i> Download
                     </button>
-                    <button id="detail-generate-btn" onclick="generateInAITool()" class="col-span-2 sm:col-span-5 px-4 py-2.5 bg-gradient-to-r from-slate-900 to-indigo-950 hover:from-slate-800 hover:to-indigo-900 text-white font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-sm transition">
-                      <i data-lucide="external-link" class="w-3.5 h-3.5 text-blue-400"></i> <span id="detail-generate-text">Generate in ChatGPT</span>
+                    <button onclick="shareCurrentDetailPrompt()" class="px-3 py-2.5 bg-white hover:bg-[#e8f5ec] text-[#1a2e1e] border border-[#dde8df] font-bold text-xs rounded-2xl flex items-center justify-center gap-1.5 transition shadow-sm">
+                      <i data-lucide="share-2" class="w-3.5 h-3.5 text-[#5a7260]"></i> Share
+                    </button>
+                    <button id="detail-generate-btn" onclick="generateInAITool()" class="col-span-2 sm:col-span-6 px-4 py-2.5 bg-gradient-to-r from-[#1a5c2a] to-[#2d8a45] hover:from-[#13441f] hover:to-[#1a5c2a] text-white font-extrabold text-xs rounded-2xl flex items-center justify-center gap-2 shadow-sm transition">
+                      <i data-lucide="external-link" class="w-3.5 h-3.5 text-[#f5c518]"></i> <span id="detail-generate-text">Generate in ChatGPT</span>
                     </button>
                   </div>
 
@@ -554,29 +575,53 @@
             </div>
 
             <!-- COMPLETE PROMPT CODE CONTAINER -->
-            <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-card space-y-4">
+            <div id="detail-prompt-container" class="bg-white rounded-3xl p-6 border border-[#dde8df] shadow-card space-y-4 transition-colors duration-300">
               <div class="flex items-center justify-between">
                 <div class="flex items-center gap-2">
-                  <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+                  <div class="w-8 h-8 rounded-xl bg-[#e8f5ec] text-[#2d8a45] flex items-center justify-center font-bold">
                     <i data-lucide="terminal" class="w-4 h-4"></i>
                   </div>
                   <div>
-                    <h3 class="text-base font-bold text-slate-900">Complete AI Prompt</h3>
-                    <p class="text-xs text-slate-500">Copy & paste directly into your AI tool</p>
+                    <h3 class="text-base font-bold text-[#1a2e1e]">Complete AI Prompt</h3>
+                    <p class="text-xs text-[#5a7260]">Copy & paste directly into your AI tool</p>
                   </div>
                 </div>
 
                 <div class="flex items-center gap-2">
-                  <span id="detail-char-count" class="text-xs font-mono text-slate-400 hidden sm:inline">0 chars</span>
-                  <button onclick="copyCurrentDetailPrompt()" class="px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-600 font-bold text-xs rounded-xl flex items-center gap-1.5 transition">
+                  <span id="detail-char-count" class="text-xs font-mono text-[#9ab09e] hidden sm:inline">0 chars</span>
+                  <button onclick="copyCurrentDetailPrompt()" class="px-3 py-1.5 bg-[#e8f5ec] hover:bg-[#2d8a45] hover:text-white text-[#2d8a45] font-bold text-xs rounded-xl flex items-center gap-1.5 transition">
                     <i data-lucide="copy" class="w-3.5 h-3.5"></i> One-Click Copy
                   </button>
                 </div>
               </div>
 
               <!-- Prompt Box -->
-              <div id="detail-full-prompt" class="p-5 rounded-2xl bg-slate-950 text-slate-100 font-mono text-xs sm:text-sm leading-relaxed border border-slate-800 shadow-inner select-all relative overflow-x-auto whitespace-pre-wrap">
+              <div id="detail-full-prompt" class="p-5 rounded-2xl bg-[#1a2e1e] text-[#f4f7f5] font-mono text-xs sm:text-sm leading-relaxed border border-[#dde8df]/20 shadow-inner select-all relative overflow-x-auto whitespace-pre-wrap transition-colors duration-300">
                 <!-- Full Prompt Text -->
+              </div>
+
+              <!-- Card Preview Studio Palettes Switcher -->
+              <div class="pt-3 border-t border-[#dde8df] flex flex-wrap items-center justify-between gap-2.5">
+                <div class="flex items-center gap-1.5 text-xs font-bold text-[#5a7260]">
+                  <i data-lucide="palette" class="w-3.5 h-3.5 text-[#2d8a45]"></i> Studio Preview Palette:
+                </div>
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <button onclick="switchStudioPalette('mana-green')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border border-[#dde8df] bg-[#f4f7f5] text-[#1a2e1e] hover:border-[#2d8a45] transition flex items-center gap-1 shadow-xs">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#2d8a45]"></span> Mana Green
+                  </button>
+                  <button onclick="switchStudioPalette('badgebee')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border border-[#fae8a8] bg-[#ffffff] text-[#171B24] hover:border-[#f5c518] transition flex items-center gap-1 shadow-xs">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#f5c518]"></span> BadgeBee
+                  </button>
+                  <button onclick="switchStudioPalette('warm-cream')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border border-[#f7e6b8] bg-[#FFF8E7] text-[#3B2F1E] hover:border-[#E8B923] transition flex items-center gap-1 shadow-xs">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#E8B923]"></span> Warm Cream
+                  </button>
+                  <button onclick="switchStudioPalette('fresh-green')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border border-[#caeed3] bg-[#F1FBF4] text-[#12301F] hover:border-[#16834A] transition flex items-center gap-1 shadow-xs">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#16834A]"></span> Fresh Green
+                  </button>
+                  <button onclick="switchStudioPalette('dark-orange')" class="px-2.5 py-1 rounded-lg text-[11px] font-bold border border-[#fcdad0] bg-[#FFF8F5] text-[#3D1B0D] hover:border-[#d95d1e] transition flex items-center gap-1 shadow-xs">
+                    <span class="w-2.5 h-2.5 rounded-full bg-[#d95d1e]"></span> Dark Orange
+                  </button>
+                </div>
               </div>
             </div>
 
@@ -1023,27 +1068,27 @@
     </div>
 
     <!-- DYNAMIC & RESPONSIVE PREMIUM FOOTER -->
-    <footer class="bg-slate-900 text-slate-300 border-t border-slate-800 py-12 px-4 sm:px-6 lg:px-8 mt-12 relative z-10">
+    <footer class="bg-[#1a2e1e] text-[#dde8df] border-t border-[#1a5c2a]/50 py-12 px-4 sm:px-6 lg:px-8 mt-12 relative z-10">
       <div class="max-w-[1536px] mx-auto grid grid-cols-1 md:grid-cols-4 gap-8">
         <!-- Brand Info -->
         <div class="space-y-4">
           <div class="flex items-center gap-3 cursor-pointer group" onclick="navigateTo('home')">
-            <div id="footer-logo-container" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-blue-600 via-indigo-600 to-violet-500 flex items-center justify-center text-white font-extrabold text-lg transition duration-300 group-hover:scale-105">
+            <div id="footer-logo-container" class="w-9 h-9 rounded-xl bg-gradient-to-tr from-[#1a5c2a] via-[#2d8a45] to-[#f5c518] flex items-center justify-center text-white font-extrabold text-lg transition duration-300 group-hover:scale-105 shadow-md shadow-[#2d8a45]/30">
               P
             </div>
-            <span id="footer-brand-name" class="font-bold text-base text-white tracking-tight group-hover:text-blue-400 transition">PromptsOne</span>
+            <span id="footer-brand-name" class="font-extrabold text-base text-white tracking-tight group-hover:text-[#f5c518] transition">PromptsOne</span>
           </div>
-          <p id="footer-tagline" class="text-xs text-slate-400 leading-relaxed">
+          <p id="footer-tagline" class="text-xs text-[#9ab09e] leading-relaxed">
             Discover, search, bookmark and copy premium engineered prompts for ChatGPT, Midjourney, Flux, Gemini, Claude, and more.
           </p>
           <div class="flex items-center gap-3">
-            <a id="footer-social-twitter" href="#" target="_blank" class="p-2 bg-slate-800 hover:bg-blue-500 hover:text-white rounded-lg text-slate-400 transition" aria-label="Twitter">
+            <a id="footer-social-twitter" href="#" target="_blank" class="p-2 bg-[#1a5c2a]/40 hover:bg-[#2d8a45] hover:text-white rounded-lg text-[#dde8df] transition" aria-label="Twitter">
               <i data-lucide="twitter" class="w-4 h-4"></i>
             </a>
-            <a id="footer-social-linkedin" href="#" target="_blank" class="p-2 bg-slate-800 hover:bg-blue-600 hover:text-white rounded-lg text-slate-400 transition" aria-label="LinkedIn">
+            <a id="footer-social-linkedin" href="#" target="_blank" class="p-2 bg-[#1a5c2a]/40 hover:bg-[#2d8a45] hover:text-white rounded-lg text-[#dde8df] transition" aria-label="LinkedIn">
               <i data-lucide="linkedin" class="w-4 h-4"></i>
             </a>
-            <a id="footer-social-discord" href="#" target="_blank" class="p-2 bg-slate-800 hover:bg-indigo-600 hover:text-white rounded-lg text-slate-400 transition" aria-label="Discord">
+            <a id="footer-social-discord" href="#" target="_blank" class="p-2 bg-[#1a5c2a]/40 hover:bg-[#2d8a45] hover:text-white rounded-lg text-[#dde8df] transition" aria-label="Discord">
               <i data-lucide="message-square" class="w-4 h-4"></i>
             </a>
           </div>
@@ -1051,45 +1096,45 @@
 
         <!-- Quick Links -->
         <div class="space-y-3">
-          <h4 class="text-xs font-extrabold uppercase text-white tracking-widest">Explore</h4>
+          <h4 class="text-xs font-extrabold uppercase text-[#f5c518] tracking-widest">Explore</h4>
           <ul class="space-y-2 text-xs">
-            <li><button onclick="navigateTo('home')" class="hover:text-white transition">Home</button></li>
-            <li><button onclick="navigateTo('search')" class="hover:text-white transition">Search Prompts</button></li>
-            <li><button onclick="navigateTo('collections')" class="hover:text-white transition">Collections</button></li>
-            <li><button onclick="navigateTo('blog')" class="hover:text-white transition">Blog</button></li>
+            <li><button onclick="navigateTo('home')" class="hover:text-[#f5c518] transition">Home</button></li>
+            <li><button onclick="navigateTo('search')" class="hover:text-[#f5c518] transition">Search Prompts</button></li>
+            <li><button onclick="navigateTo('collections')" class="hover:text-[#f5c518] transition">Collections</button></li>
+            <li><button onclick="navigateTo('blog')" class="hover:text-[#f5c518] transition">Blog</button></li>
           </ul>
         </div>
 
         <!-- Resources / Legal -->
         <div class="space-y-3">
-          <h4 class="text-xs font-extrabold uppercase text-white tracking-widest">Resources & Legal</h4>
+          <h4 class="text-xs font-extrabold uppercase text-[#f5c518] tracking-widest">Resources & Legal</h4>
           <ul class="space-y-2 text-xs">
-            <li><button onclick="navigateTo('docs')" class="hover:text-white transition">Help Center & FAQ</button></li>
-            <li><button onclick="navigateTo('about')" class="hover:text-white transition">About Us</button></li>
-            <li><button onclick="navigateTo('privacy')" class="hover:text-white transition">Privacy Policy</button></li>
-            <li><button onclick="navigateTo('terms')" class="hover:text-white transition">Terms of Service</button></li>
-            <li><button onclick="navigateTo('cookies')" class="hover:text-white transition">Cookie Policy</button></li>
+            <li><button onclick="navigateTo('docs')" class="hover:text-[#f5c518] transition">Help Center & FAQ</button></li>
+            <li><button onclick="navigateTo('about')" class="hover:text-[#f5c518] transition">About Us</button></li>
+            <li><button onclick="navigateTo('privacy')" class="hover:text-[#f5c518] transition">Privacy Policy</button></li>
+            <li><button onclick="navigateTo('terms')" class="hover:text-[#f5c518] transition">Terms of Service</button></li>
+            <li><button onclick="navigateTo('cookies')" class="hover:text-[#f5c518] transition">Cookie Policy</button></li>
           </ul>
         </div>
 
         <!-- Contact Desk Info -->
         <div class="space-y-3">
-          <h4 class="text-xs font-extrabold uppercase text-white tracking-widest">Contact Details</h4>
-          <ul class="space-y-2.5 text-xs text-slate-400">
+          <h4 class="text-xs font-extrabold uppercase text-[#f5c518] tracking-widest">Contact Details</h4>
+          <ul class="space-y-2.5 text-xs text-[#9ab09e]">
             <li class="flex items-start gap-2">
-              <i data-lucide="phone" class="w-4 h-4 text-blue-500 shrink-0"></i>
+              <i data-lucide="phone" class="w-4 h-4 text-[#2d8a45] shrink-0"></i>
               <span id="footer-phone">Loading...</span>
             </li>
             <li class="flex items-start gap-2">
-              <i data-lucide="mail" class="w-4 h-4 text-blue-500 shrink-0"></i>
+              <i data-lucide="mail" class="w-4 h-4 text-[#2d8a45] shrink-0"></i>
               <span id="footer-email">Loading...</span>
             </li>
             <li class="flex items-start gap-2">
-              <i data-lucide="map-pin" class="w-4 h-4 text-blue-500 shrink-0"></i>
+              <i data-lucide="map-pin" class="w-4 h-4 text-[#2d8a45] shrink-0"></i>
               <span id="footer-address">Loading...</span>
             </li>
             <li class="flex items-start gap-2">
-              <i data-lucide="clock" class="w-4 h-4 text-blue-500 shrink-0"></i>
+              <i data-lucide="clock" class="w-4 h-4 text-[#2d8a45] shrink-0"></i>
               <span id="footer-hours">Loading...</span>
             </li>
           </ul>
