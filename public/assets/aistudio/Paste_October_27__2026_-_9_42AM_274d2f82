@@ -1,0 +1,228 @@
+# MASTER PROMPT — PromptsVerse / PromptsOne: Full Audit, Bug Fix & Production Hardening
+
+You are a senior full-stack engineer (TypeScript, Vite, Firebase Auth + Firestore, Tailwind, security, responsive UI). You are working on the existing project in this workspace. It is a vanilla-TypeScript single-page app ("Google for AI Prompts") plus a separate admin panel.
+
+**Stack:** Vite 6, vanilla TS (no React is actually used), Tailwind, Lucide icons, Firebase Auth (email/password + Google), Firestore, Cloudinary unsigned uploads, Firebase Hosting, GitHub Actions deploy.
+**Entry files:** `index.html` + `src/app.ts` (public site, ~3350 lines), `admin.html` + `src/admin.ts` (admin panel, ~4600 lines), `src/firebase.ts`, `src/ads.ts`, `firestore.rules`, `firestore.indexes.json`, `firebase.json`, `vite.config.ts`.
+
+## GROUND RULES (follow strictly)
+
+1. Read every file listed above fully before changing anything. Do not guess.
+2. Work in the **phases** below, in order. After each phase: run `npm run lint` and `npm run build`, fix every error, then print a short changelog (file, what changed, why).
+3. Output **complete files** for every file you change. Never use "...rest unchanged", never truncate, never leave TODO placeholders. If a file is too large for one reply, split it into clearly named modules and give each module in full.
+4. Do not remove working features. Do not change the visual design language (colors, fonts, card style) except where a fix requires it.
+5. No fake/demo/mock sessions, no hardcoded admin emails, no secrets in client code.
+6. Everything that cannot be done in code (Firebase console, Cloudinary console, DNS) goes in a final **"Manual steps for the owner"** checklist with exact click-paths.
+7. Update `PROJECT_CONTEXT.md` at the end. It is currently outdated (wrong line counts, wrong file map, says some phases are done that are not).
+
+---
+
+## PHASE 1 — CONFIRMED BUGS TO FIX (found by code audit)
+
+### 1.1 Routing is broken (this is why clicking a prompt image/card feels dead or glitchy)
+- `openPromptDetail()` sets `location.hash = '#prompt/<id>'`, then calls `navigateTo('details')`.
+- `navigateTo()` sees the hash is not `#details` and **overwrites it with `#details`**.
+- Both hash changes fire `hashchange` → `handleHashRouting()` → `openPromptDetail(id,false)` runs again. Result: the view counter increments twice, the URL ends as `#details` (which `handleHashRouting` does not handle), refresh/back/share links break, and the page can flash or appear unresponsive.
+- `handleHashRouting()` also ignores `#details`, `#dashboard`, `#blog/<slug>`.
+
+**Fix:** Replace with one small router module (`src/router.ts`):
+- Use the **History API with real paths** (`/`, `/search?q=`, `/prompt/:id`, `/collections`, `/blog`, `/blog/:slug`, `/about`, `/privacy`, `/terms`, `/cookies`, `/contact`, `/docs`, `/dashboard`) with `pushState` + `popstate`. `firebase.json` already has the SPA rewrite.
+- `navigateTo(view, { push = true })` must never trigger itself recursively. Use a re-entrancy guard.
+- Increment prompt views **once per page visit per prompt** (guard with a `Set` in `sessionStorage`).
+- Back/forward, refresh, deep links and "share" links must all work. Update canonical/og tags and `document.title` per route.
+- Unknown routes → a proper 404 view. Unauthenticated access to `/dashboard` → open login modal, then return.
+
+### 1.2 Cards: whole card + image must be reliably clickable
+- Replace all inline `onclick="openPromptDetail('${p.id}')"` with **one delegated click listener** using `data-prompt-id`. Same for copy, bookmark, like buttons (stopPropagation handled in the delegate).
+- Make each card keyboard-accessible (`role="link"`, `tabindex="0"`, Enter/Space) and render a real `<a href="/prompt/ID">` so it works with middle-click, SEO crawlers and long-press on mobile.
+- Image layers: the blurred background `<img>` must have `pointer-events-none` and `aria-hidden`; the main image must have `draggable="false"`. Do not start images at `opacity-0` waiting for `onload` (cached images and failed loads stay invisible → blank dark box). Use a skeleton background + `loading="lazy"` + `decoding="async"` + explicit `width/height` or aspect ratio, and a **visible placeholder on error** instead of hiding the image.
+- Same fix for the trending cards (`app.ts` ~L1066), search autocomplete results (~L2649), related/recommended grids and sidebar widgets.
+
+### 1.3 `handleSavePromptForm` does not exist
+`index.html` has `<form id="prompt-crud-form" onsubmit="handleSavePromptForm(event)">` but no such function exists anywhere in `src/app.ts` or on `window`. Submitting the user "Submit Prompt / Edit Prompt" form throws a ReferenceError and the form can reload the page. `openUserSubmitModal`, `editUserPrompt`, `deleteUserPromptConfirm` already exist but cannot save.
+**Implement** `handleSavePromptForm` (via `addEventListener('submit')`, no inline handler):
+- Validate: title 5–120 chars, prompt 10–5000, negative ≤1000, tool/category must exist in the loaded lists, tags ≤10 each ≤30 chars, image URL must be https and from Cloudinary/Unsplash, or upload a file through `uploadToCloudinary`.
+- Create: `status: 'pending'`, `creatorId = auth.uid`, `creator = displayName`, `views/likes/downloads/copyCount = 0`, `featured: false`, `trending: false`, `createdAt/updatedAt = serverTimestamp()`.
+- Edit: only the owner, only while `pending`/`draft`; never allow changing `status`, `featured`, `trending`, counters, `creatorId`.
+- Disable the submit button + show spinner while saving, show clear success/error toast, close modal, refresh "My submissions".
+
+### 1.4 DOM ids referenced in code but missing from `index.html`
+`ai-assistant-modal, ai-assist-idea, ai-assist-tool, ai-assist-style, ai-assist-output-text, explore-tools-grid, hero-left-panel, hero-right-panel, live-ai-trends-ticker, stats-counter-bar, pf-tool`, plus legacy `admin-panel-*` / `admin-*` ids that belong to the old in-page admin. These features silently do nothing. For each: either add the missing markup (if the feature is wanted: AI Prompt Builder modal, hero side panels, trends ticker, explore-tools grid) or delete the dead code. Add a dev-time helper that warns in the console when a `getElementById` returns null for a required element.
+Also: `closeSeasonalComposer` is used in `admin.ts` inline onclick but is not exposed on `window` → expose it or (better) remove inline handlers in the admin (see 3.3).
+
+### 1.5 Missing Firestore composite indexes → wrong/empty gallery
+`firestore.indexes.json` is empty, but `loadInitialPrompts()` runs queries like
+`where(status=='approved') + orderBy(createdAt|likes|views)` and `where(status) + where(trending) + orderBy(likes)`. These fail without indexes, so the code silently falls back to an **unordered** query and the home page order/trending/"load more" are wrong. Audit **every** `query(...)` in `app.ts`, `admin.ts`, `ads.ts` and generate the complete `firestore.indexes.json`. Also make the fallback log a clear warning instead of hiding the problem.
+
+### 1.6 Site can fail to load because of unguarded Analytics
+`firebase.ts`: `getAnalytics(app)` is called unconditionally. It throws in browsers where Analytics is unsupported or blocked (ad-blockers, private mode, some in-app browsers) and can break the whole module graph. Use `isSupported().then(...)` lazily, wrapped in try/catch, and only after cookie consent.
+
+### 1.7 Real-time listener churn on the home page
+The home gallery uses `onSnapshot` on a query ordered by `views/likes`. Every view/like/copy increment by any visitor re-fires the snapshot and re-renders the whole grid (flicker, jumping cards, high Firestore read cost, wrong "Load more" cursor). Use `getDocs` for the gallery and trending sections (refresh on demand or every few minutes), keep `onSnapshot` only for small config collections and the current user's bookmarks/likes. `renderAll()` on every auth change should only re-render the parts that depend on auth.
+
+### 1.8 Misc functional issues
+- `navigateTo` writes `#dashboard`, `#details` etc. into the hash; `view-dashboard` is not routed (fixed by 1.1).
+- Hero "cursor glow" mousemove handler runs on touch devices and adds cost: attach only if `(hover: hover) and (pointer: fine)` and not `prefers-reduced-motion`.
+- `lucide.createIcons()` is called after nearly every render (dozens of full-document scans). Switch to the npm package with explicit icon imports (tree-shaken) and a single debounced `refreshIcons()` helper scoped to the changed container.
+- Branding is inconsistent (PromptVerse / PromptsVerse / PromptsOne; domain `promptsone.com`, Firebase project `promptsverse-ai`). Pick one name from `siteConfigs` and use it everywhere (titles, toasts, auth modal, footer, schema.org, sitemap).
+- Seeding: confirm no client code writes seed data to Firestore for normal visitors; if any seeding exists, it must be admin-only and idempotent.
+- `loadMorePrompts` must use the same sort/filter/cursor as the initial query, de-duplicate by id, and hide the button when finished.
+
+---
+
+## PHASE 2 — AUTHENTICATION (user + admin) MUST WORK END-TO-END
+
+Current problems:
+- `handleEmailAuthSubmit` tries login, and on `auth/invalid-credential` **auto-creates an account**. With Firebase's default email-enumeration protection, a simple wrong password also returns `invalid-credential`, so a typo triggers sign-up and then a confusing raw `email-already-in-use` error.
+- The modal has `login`/`signup` modes (`openAuthModal(type)`) but the submit handler ignores the mode.
+- Raw Firebase error messages are shown to users.
+- Google popup only; fails on many mobile/in-app browsers (popup blocked).
+
+Implement a proper `src/auth.ts`:
+- Explicit **Login** and **Sign up** modes with a toggle; sign-up has display name, email, password (min 8, strength hint), confirm password; sends **email verification**; shows "verify your email" banner; unverified users can browse and bookmark but cannot submit prompts.
+- **Forgot password** (`sendPasswordResetEmail`) with generic success message.
+- Friendly mapped error messages for all common codes (`invalid-credential`, `email-already-in-use`, `weak-password`, `too-many-requests`, `popup-closed-by-user`, `popup-blocked`, `network-request-failed`, `operation-not-allowed`, `unauthorized-domain`). `unauthorized-domain` should tell the owner to add the domain in Firebase Auth → Settings → Authorized domains (log in console, generic message to users).
+- Google sign-in: try popup, on `auth/popup-blocked` or mobile/in-app browser fall back to `signInWithRedirect` + `getRedirectResult` handling at startup.
+- Loading/disabled states on every button, focus trap + Escape-to-close + body scroll lock for the modal, proper `autocomplete` attributes (`email`, `current-password`, `new-password`), show/hide password.
+- Auth state: initialize UI only after the first `onAuthStateChanged` fires; show a skeleton in the navbar auth area until then (no flash of "Login" for logged-in users). Persist session (`browserLocalPersistence`).
+- Logout clears bookmarks/likes listeners and cached user data, and redirects away from protected routes.
+
+**Admin panel (`admin.html` / `admin.ts`):**
+- Keep the login screen, but make the **security real, not cosmetic**: the client check (`role === 'admin'`) is only UX. All admin power must be enforced by Firestore rules (Phase 3).
+- Role source: use **Firebase custom claims** (`request.auth.token.admin == true`) set by a small Node script `scripts/set-admin.mjs` (uses firebase-admin + service account, run locally by the owner), and also support the existing `users/{uid}.role == 'admin'` as fallback during migration. The `users/{uid}.role` field must never be client-writable (already true in rules; keep it).
+- `syncUserDoc` is called on every admin load and does `setDoc(... merge)` with the existing role: fine, but never send `role` from the client on create other than `'user'`.
+- Admin login errors: map codes, rate-limit UI after 5 failures (disable for 30s), show "Access denied" screen with logout button for non-admins.
+- Add idle timeout (e.g. 30 min) → sign out; re-authentication prompt before destructive actions (delete user, delete all, settings changes).
+- Write an entry to `adminLogs` for every admin write (action, target, uid, timestamp) — the rules already allow this; verify `admin.ts` actually does it.
+- Remove `document.body.style.overflow='hidden'` global lock; scroll only inside the main content pane.
+
+---
+
+## PHASE 3 — SECURITY HARDENING
+
+### 3.1 Rewrite `firestore.rules` (current rules have real holes)
+Problems in the current file — fix all:
+1. `prompts`: `allow read: if true` exposes **pending/rejected** prompts to everyone. → read allowed only if `resource.data.status == 'approved'` OR owner OR admin.
+2. `prompts` `allow create: if isSignedIn()` has **no validation**: any user can create a prompt with `status:'approved'`, `featured:true`, fake `creatorId`, huge counters. → On create require: `creatorId == request.auth.uid`, `status == 'pending'`, `featured == false`, `trending == false`, counters all `0`, key whitelist (`keys().hasOnly([...])`), string types and max sizes (title ≤120, prompt ≤5000, negative ≤1000, tags list ≤10), `request.auth.token.email_verified == true`.
+3. `prompts` update: the owner can currently edit their own pending prompt **including setting `status:'approved'`**, and **any signed-in user can set counters to any value** (`hasOnly(['views','likes','downloads','copyCount'])` with no value check). → Owner update: forbid changing `status, featured, trending, creatorId, views, likes, downloads, copyCount, createdAt`. Counter update by non-owner/non-admin: only one key at a time and **exactly +1** (`request.resource.data.views == resource.data.views + 1`) on approved prompts. Likes must be tied to the per-user `users/{uid}/likes/{promptId}` doc created in the same batch (use `getAfter`/`existsAfter`).
+4. `users`: `allow read: if isSignedIn()` lets any logged-in user read **every user's email and profile**. → read only owner or admin. Create: `isOwner && role=='user'` and `email == request.auth.token.email`. Update: owner may change only `displayName, photoURL, updatedAt`.
+5. `siteConfigs/stats`: the extra `allow update` has **no auth requirement** → anonymous users can write `copiedToday` to any value (even a string). → require `isSignedIn()` (or App Check) and `copiedToday == resource.data.copiedToday + 1`, number type.
+6. `adEvents` and `contactSubmissions` `create: if true` → unlimited spam/cost. → validate keys, types, max lengths, `timestamp == request.time`; contact messages ≤2000 chars; add App Check enforcement; keep reads admin-only.
+7. `searchLogs`, `mediaLibrary`: validate fields and sizes the same way.
+8. Make `isAdmin()` check the custom claim first (`request.auth.token.admin == true`) and fall back to the `users` doc to save reads.
+9. Keep the default-deny catch-all. Add a `rules_test` folder with `@firebase/rules-unit-testing` + Firestore emulator tests covering: anonymous read approved vs pending, user create valid/invalid prompt, user self-promote attempt, counter +1 vs +1000, admin CRUD, users listing denied.
+
+### 3.2 XSS — currently the biggest app-level risk
+Nearly every `innerHTML` in `app.ts` interpolates database/user content **unescaped**: `p.title, p.prompt, p.creator, p.category, p.tool, photoURL, blog title/body, featuredImage, site headline (innerHTML = data.headline), toast messages, option values`. A user-submitted prompt title like `"><img src=x onerror=...>` runs JavaScript in every visitor's (and the admin's) session.
+**Fix:**
+- Create `src/utils/dom.ts` with `escapeHtml()`, `escapeAttr()`, `safeUrl()` (allow only `https:`, plus `data:image/` where needed; reject `javascript:`), and a tiny `html` tagged-template helper that escapes interpolations by default.
+- Apply it to **every** template string in `app.ts`, `admin.ts`, `ads.ts` (admin.ts already has an `escapeHtml` at the bottom but uses it in only two places — apply everywhere and move it to the shared util).
+- Blog posts / static pages / FAQ that legitimately contain HTML: sanitize with **DOMPurify** (strict allow-list) before `innerHTML`.
+- Use `textContent` for all plain text sets (toast, titles, counts).
+- `injectThirdPartyScripts()` currently builds `<script>` elements with `innerHTML` from admin-configured settings. Change it to accept **only IDs** validated by regex (GA4 `G-XXXX`, Clarity id, Pixel id) and generate the snippet in code. Never inject raw admin-pasted script.
+- Remove all inline `onclick=` / `onsubmit=` in `index.html`, `admin.html`, and template strings; use delegated listeners with `data-action` attributes. This allows a strict CSP without `'unsafe-inline'` for scripts.
+
+### 3.3 Hosting security headers (`firebase.json`)
+Add for `**`: `Content-Security-Policy` (default-src 'self'; script-src 'self' + exact Google/AdSense/Analytics/Firebase hosts you actually use; img-src 'self' data: https://res.cloudinary.com https://images.unsplash.com + ad hosts; connect-src for firestore/identitytoolkit/securetoken/googleapis/cloudinary; frame-src for AdSense and `https://promptsverse-ai.firebaseapp.com` auth iframe; object-src 'none'; base-uri 'self'; frame-ancestors 'self'), `X-Content-Type-Options: nosniff`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` (camera/mic/geolocation off), `Strict-Transport-Security` (1 year, includeSubDomains), and `Cross-Origin-Opener-Policy: same-origin-allow-popups` (required so Google sign-in popup keeps working). For `/admin` and `/admin.html`: `X-Frame-Options: DENY`, `Cache-Control: no-store`.
+Cache: `/assets/**` → `public, max-age=31536000, immutable`; `index.html` and `admin.html` → `no-cache`.
+Test that Google sign-in, AdSense, Analytics, Cloudinary images and Firestore still work with the CSP (use report-only first, then enforce).
+
+### 3.4 Secrets, keys and repo hygiene
+- `.env.example` currently contains **real** values (Firebase API key, Cloudinary cloud/preset). Replace with placeholders. Firebase web API keys are public by design, but the key must be **restricted** (owner step) and `firebase.ts` should read config from `import.meta.env.VITE_FIREBASE_*` with a build-time check that fails if any are missing.
+- `GEMINI_API_KEY` and `@google/genai` are in the project but unused in the client. Remove from client deps. If AI features are wanted, call Gemini only from a **Firebase Cloud Function** (callable, App Check + auth required, per-user rate limit). Never put it in `import.meta.env` / `define`.
+- Delete from the repo/zip: `.aistudio/` folder, duplicate PNG in `public/assets/aistudio/`, empty `bun.lock`, `src/main.tsx`, `src/App.tsx`, `src/vite-env` leftovers not needed, duplicate `google93e1f106c7169015.html` in project root (keep only the one in `public/`).
+- Cloudinary: client-side type/size checks are bypassable. Document the owner steps to lock the unsigned preset (allowed formats, max file size, fixed folder, no overwrite, no `resource_type` raw, moderation) or migrate to **signed uploads** via a Cloud Function. Also `uploadToCloudinary` forces `w_800` in the stored URL, which permanently degrades large images: store the original secure_url and apply transformations only at render time with `optimizeCloudinaryUrl(url, width)` (card 480, detail 1200).
+- Enable **Firebase App Check** (reCAPTCHA Enterprise/v3) in the client and enforce for Firestore.
+
+### 3.5 Other
+- Rate-limit client-side actions that write (copy, like, view) with debounce and per-session guards.
+- `robots.txt`: keep `/admin` disallowed but remember it advertises the path; `admin.html` already has `noindex`. Add `X-Robots-Tag: noindex` header for admin.
+- Contact form: honeypot field + minimum fill time + length limits.
+- Never log tokens, emails or full error objects with auth info in production (`handleFirestoreError` logs user email/uid → reduce).
+
+---
+
+## PHASE 4 — PERFORMANCE & LOADING
+
+- **Remove `https://cdn.tailwindcss.com` (Play CDN) from `index.html` and `admin.html`.** It is for prototyping only: it compiles CSS in the browser on every page load (slow first paint, layout flash, blocked by strict CSP). The project already has `tailwindcss` v4 + `@tailwindcss/vite` installed but `src/index.css` does not import it, so the plugin does nothing. Do: `@import "tailwindcss";` at the top of `src/index.css`, move the inline `tailwind.config` (brand colors, fonts, custom shadows) into an `@theme { ... }` block, import the CSS from the TS entry, and make sure classes used inside TS template strings (which is most of them) are detected (`@source "../src"` and `@source "../admin.html"`). Convert `bg-[#f8fafc]`-style arbitrary values where simple. Verify the built CSS contains all classes used by dynamically generated HTML.
+- Replace `https://unpkg.com/lucide@latest` (unpinned, render-blocking, supply-chain risk) with the `lucide` npm package, importing only icons used.
+- AdSense script: do not load in `<head>` synchronously. Load it after first interaction/idle and only after consent, never on the admin page.
+- Preload the main font weight, keep `display=swap`, drop unused weights (300).
+- Split bundles: `manualChunks` for `firebase/*`; lazy-load admin-only/blog/docs code; `build.sourcemap: false`; `target: 'es2020'`.
+- Remove unused dependencies: `react, react-dom, @vitejs/plugin-react, lucide-react, motion, express, dotenv, @google/genai, @types/express, tsx, esbuild` (verify with a search that nothing imports them). Remove duplicate `vite` entry. Remove `allowedHosts: true` and the AI-Studio HMR comments from `vite.config.ts` for production; keep a dev-only block.
+- Images: Cloudinary `f_auto,q_auto,w_<size>`, `srcset`/`sizes` on cards, `fetchpriority="high"` + no lazy on the first row (LCP), fixed aspect-ratio boxes to prevent layout shift (target CLS < 0.1, LCP < 2.5s on mobile 4G).
+- Loading UX: skeleton cards for gallery/trending/details; a global error boundary that shows a friendly retry panel if Firestore fails; offline banner.
+- Add `<noscript>` message, a real `favicon.ico`/`apple-touch-icon`/`site.webmanifest` in `public/`, and a proper OG image hosted on your own domain.
+
+---
+
+## PHASE 5 — RESPONSIVE UI / UX (desktop, tablet, mobile, every tab)
+
+Test and fix at widths **320, 360, 375, 414, 768, 1024, 1280, 1366, 1440, 1920** and at landscape phone.
+
+**Global**
+- No horizontal page scroll at any width (`overflow-x-hidden` on body hides the problem; find and fix the overflowing elements instead: long prompt text → `break-words`/`overflow-wrap:anywhere`, wide tables → `overflow-x-auto` wrapper, fixed pixel widths, `min-w-*`).
+- Use `min-h-dvh`/`100dvh` instead of `100vh` (mobile browser bars). Respect `safe-area-inset-*` for the sticky bottom action bar on prompt details.
+- Touch targets ≥ 44×44px, visible focus rings, `aria-label` on every icon-only button, `lang`, landmarks (`header/nav/main/footer`), contrast AA. The tiny text (`text-[10px]`, `text-[11px]`) used for card content and metadata must be at least 12px on mobile.
+- Disable hover-only transforms on touch (`@media (hover:hover)`), respect `prefers-reduced-motion` for the many keyframe animations.
+- Modals (auth, prompt quick view, add/edit prompt, AI builder): `max-h-[90dvh]` with internal scroll, close on Escape/backdrop, focus trap, restore focus, body scroll lock, full-screen sheet on mobile.
+
+**Public pages — verify each one works and fits:** Home (hero, typewriter search, category pills, trending, gallery + load more, sidebar), Search (filters, results count, empty state), Collections, Prompt details (breadcrumbs, image, copy/like/bookmark/share/download, related, sticky mobile bar), Dashboard (my submissions, bookmarks), Blog list + blog post, Docs/FAQ, Contact (form validation + success), About, Privacy, Terms, Cookies, 404.
+- Mobile navbar drawer: closes on route change/outside tap, does not trap scroll.
+- Sidebar widgets stack below content on `< lg`.
+- Category pills and tool badges: horizontal scroll with snap, no wrapping overflow.
+
+**Admin panel — currently not usable on mobile**
+- `#admin-sidebar` is a fixed `w-64` flex item that is visible at every width, so on a phone it eats most of the screen; `toggleAdminSidebar` only toggles `hidden` (and on desktop hides the nav permanently). → Desktop (`lg+`): persistent sidebar. `< lg`: off-canvas drawer (fixed, translate-x, overlay, close on nav/Escape), hamburger in header.
+- Data tables → scrollable containers with sticky first column, or card layout on `< md`. Forms/modals → single column on mobile. Stat cards → responsive grid. Charts/analytics resize with container.
+- Verify all admin sections open and function: Overview, Prompts (search, filter, approve/reject/delete/edit, bulk actions, pagination), Categories, AI Tools, Blogs, Static pages, Collections, Seasonal campaigns, Ads/Sponsored ads, Site settings/Hero/Stats/Banners, Users, Media library, Contact submissions, Analytics, Logs, System. Every button must do what its label says, show loading + success/error feedback, and use a styled confirm modal (no `alert/confirm`).
+
+---
+
+## PHASE 6 — SEO & DEPLOYMENT PIPELINE
+
+- `public/sitemap.xml` currently lists `#hash` URLs, which Google ignores. After path routing (1.1) list real URLs. Add a build/CI script (`scripts/generate-sitemap.mjs`, uses firebase-admin) that writes approved prompt and blog URLs.
+- Because this is a client-rendered SPA, add per-route meta updates (already partly there) and JSON-LD per prompt (`CreativeWork`) and per blog post (`Article`). If feasible, add a Firebase Function/Hosting rewrite that serves pre-rendered meta tags for `/prompt/:id` for crawlers and social previews.
+- Make `canonical`, `og:url`, `og:image`, `sitemap`, `robots.txt`, `ads.txt` all use the **same final domain**.
+- GitHub Actions: use `npm ci`, run `npm run lint` and the rules tests, then `npm run build`, then deploy **`--only hosting,firestore:rules,firestore:indexes`** (the current workflow deploys hosting only, so rule/index fixes never reach production). Pin Node 20. Add a PR preview channel workflow.
+- `package.json`: add scripts `lint`, `test:rules`, `typecheck`, `preview`. Fix `clean` for Windows (`rimraf`).
+- `tsconfig`: enable `strict`, `noUnusedLocals`, `noImplicitAny`; remove the need for `(window as any)` by declaring a typed `Window` interface; remove `any` from Firestore mappers via typed converters.
+
+---
+
+## PHASE 7 — CODE STRUCTURE (do after everything above works)
+
+Split the two giant files into modules without changing behaviour:
+`src/router.ts, src/auth.ts, src/state.ts, src/utils/dom.ts, src/utils/format.ts, src/services/prompts.ts, src/services/config.ts, src/ui/{cards,modals,toast,navbar,gallery,details,search,dashboard,blog}.ts, src/admin/{auth,prompts,categories,tools,blogs,pages,users,media,ads,settings,analytics}.ts`.
+Each module has a single responsibility, typed exports, no globals except what is explicitly attached by one `src/globals.ts`. Delete the dead React boilerplate.
+
+---
+
+## FINAL ACCEPTANCE TESTS (all must pass before you say "done")
+
+1. `npm ci && npm run lint && npm run build` — zero errors, zero warnings that matter. No `cdn.tailwindcss.com`, no `unpkg.com/lucide@latest`, no inline event handlers left.
+2. Firestore emulator rules tests pass (see 3.1).
+3. A visitor (logged out) can browse, search, filter, open any approved prompt by clicking the **card, image, or title**, copy a prompt, share a link; deep link `/prompt/<id>` works on refresh; Back button works; a pending prompt URL shows "not found".
+4. Sign up → verification email → login → bookmark → like → submit prompt (appears as *pending*, not public) → edit while pending → logout. Wrong password gives a friendly error and does **not** create an account. Forgot password works. Google login works on desktop and on mobile (redirect fallback).
+5. Admin: non-admin user is blocked **by rules** (verify by calling Firestore writes from the browser console as a normal user — all denied). Admin can approve/reject, create/edit/delete prompts and categories, upload an image, manage users, see analytics, and every action appears in `adminLogs`.
+6. Console is free of errors/warnings on a cold load of `/` and `/admin` (apart from third-party ad scripts).
+7. Lighthouse (mobile): Performance ≥ 85, Accessibility ≥ 95, Best Practices ≥ 95, SEO ≥ 95.
+8. No horizontal scroll and no clipped content at 320 / 375 / 768 / 1024 / 1366 / 1920 on every public page and every admin section.
+9. A prompt titled `"><img src=x onerror=alert(1)>` renders as plain text everywhere (cards, details, search, admin tables, toasts).
+10. Anonymous user cannot read pending prompts, cannot read other users, cannot set counters to arbitrary values.
+
+---
+
+## MANUAL STEPS FOR THE OWNER (output this as the last section, with exact click-paths)
+
+1. **Firebase Console → Firestore → Rules/Indexes:** run `firebase deploy --only firestore:rules,firestore:indexes`; wait for indexes to finish building.
+2. **First admin:** Firebase Console → Authentication → copy the UID of your account → run `node scripts/set-admin.mjs <uid>` (custom claim) and set `users/<uid>.role = "admin"` in Firestore once, manually.
+3. **Authentication → Settings → Authorized domains:** add `promptsone.com`, `www.promptsone.com`, `promptsverse-ai.firebaseapp.com`, `promptsverse-ai.web.app`. Enable email enumeration protection, enable email verification templates, set the password policy.
+4. **Google Cloud Console → APIs & Services → Credentials:** restrict the Browser API key by HTTP referrer (your domains only) and by API (Identity Toolkit, Firestore, Token Service, Firebase Installations).
+5. **App Check:** register the web app with reCAPTCHA, enable enforcement for Firestore after verifying traffic in monitoring.
+6. **Cloudinary → Settings → Upload presets:** lock `promptverse_unsigned` (allowed formats jpg/png/webp/avif/gif, max file size 10 MB, fixed folder, disable overwrite, enable moderation if needed).
+7. **GitHub → Settings → Secrets:** confirm `FIREBASE_SERVICE_ACCOUNT_PROMPTSVERSE_AI` is set; add the `VITE_FIREBASE_*` and Cloudinary values as repository variables.
+8. **Rotate** any key that was ever committed or shared, and remove it from git history if the repo is public.
+9. **AdSense/Analytics:** confirm `ads.txt` publisher id, consent banner, and domain verification file are on the final domain.
+
+Begin with Phase 1. Print the audit summary first (what you confirmed in the code, with file names and line numbers), then proceed phase by phase, delivering complete files.

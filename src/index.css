@@ -1,3 +1,36 @@
+@import "tailwindcss";
+
+@source "../index.html";
+@source "../admin.html";
+@source "../src";
+
+@theme {
+  --font-sans: 'Plus Jakarta Sans', sans-serif;
+  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
+
+  --color-brand-green: #2d8a45;
+  --color-brand-green-dark: #1a5c2a;
+  --color-brand-green-pale: #e8f5ec;
+  --color-brand-yellow: #f5c518;
+  --color-brand-yellow-light: #fff9e6;
+  --color-brand-yellow-hover: #e5b800;
+  --color-brand-orange: #d95d1e;
+  --color-brand-orange-dark: #b8430e;
+  --color-brand-orange-light: #fff2eb;
+  --color-brand-bg: #f4f7f5;
+  --color-brand-card: #ffffff;
+  --color-brand-border: #dde8df;
+  --color-brand-text: #1a2e1e;
+  --color-brand-text-sec: #5a7260;
+  --color-brand-text-muted: #9ab09e;
+  --color-brand-error: #c0392b;
+
+  --shadow-glass: 0 8px 32px 0 rgba(26, 92, 42, 0.06);
+  --shadow-card: 0 4px 20px -2px rgba(26, 46, 30, 0.04);
+  --shadow-card-hover: 0 12px 30px -4px rgba(45, 138, 69, 0.16);
+  --shadow-floating: 0 20px 40px -15px rgba(26, 92, 42, 0.08);
+}
+
 /* =============================================================================
    BRAND THEME & DESIGN SYSTEM TOKENS
    ============================================================================= */
@@ -314,25 +347,17 @@ body {
   100% { transform: translate(100%, 100%) rotate(30deg); }
 }
 
-/* =============================================================================
-   AD SYSTEM — Containers, Labels & CLS Prevention
-   ============================================================================= */
-
-/* CLS prevention: reserve space for ad containers, use content-visibility */
+/* Ad system styling */
 .ad-container {
   position: relative;
   overflow: hidden;
   contain: layout style;
   content-visibility: auto;
 }
-
-/* Hide empty ad containers to prevent blank gaps */
 .ad-container:empty {
   display: none;
   min-height: 0 !important;
 }
-
-/* Sponsored / Ad label — always visible, compliant with AdSense policies */
 .ad-sponsored-label {
   position: absolute;
   top: 8px;
@@ -347,42 +372,4 @@ body {
   color: #64748b;
   z-index: 5;
   pointer-events: none;
-}
-
-/* Sponsored banner wrapper — premium card styling */
-.ad-sponsored-banner {
-  position: relative;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
-}
-.ad-sponsored-banner:hover {
-  box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.1);
-}
-
-/* Sponsored prompt card — distinguishing border highlight */
-.ad-sponsored-card {
-  position: relative;
-}
-.ad-sponsored-card > div {
-  border-color: rgba(59, 130, 246, 0.25);
-}
-
-/* AdSense wrapper — responsive and CLS-safe */
-.ad-adsense-wrapper {
-  width: 100%;
-  overflow: hidden;
-  text-align: center;
-}
-.ad-adsense-wrapper ins {
-  display: block;
-  width: 100%;
-}
-
-/* Responsive ad container sizing */
-@media (max-width: 640px) {
-  .ad-container[data-ad-placement="sidebar"] {
-    min-height: 100px !important;
-  }
-  .ad-container[data-ad-placement="footer-banner"] {
-    min-height: 50px !important;
-  }
 }

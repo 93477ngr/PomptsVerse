@@ -1,50 +1,59 @@
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps } from "firebase/app";
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  signInWithPopup, 
-  signInWithEmailAndPassword, 
-  createUserWithEmailAndPassword, 
-  signOut as firebaseSignOut, 
-  onAuthStateChanged,
-  User
+  User,
+  setPersistence,
+  browserLocalPersistence
 } from "firebase/auth";
 import { 
   getFirestore, 
-  collection, 
   doc, 
-  getDocs, 
   getDoc, 
   setDoc, 
   addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  onSnapshot, 
-  query, 
-  where, 
-  orderBy,
+  collection,
   serverTimestamp,
-  getDocFromServer,
-  writeBatch
+  getDocFromServer
 } from "firebase/firestore";
-import { getAnalytics } from "firebase/analytics";
+import { getAnalytics, isSupported } from "firebase/analytics";
 
 export const firebaseConfig = {
-  apiKey: "AIzaSyBlG12KHQmiAw28sgULgkvyd1G829EU0rg",
-  authDomain: "promptsverse-ai.firebaseapp.com",
-  projectId: "promptsverse-ai",
-  storageBucket: "promptsverse-ai.firebasestorage.app",
-  messagingSenderId: "643305778874",
-  appId: "1:643305778874:web:44e92dc6109479f04c9c83",
-  measurementId: "G-L1YHXNBH4T"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBlG12KHQmiAw28sgULgkvyd1G829EU0rg",
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "promptsverse-ai.firebaseapp.com",
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "promptsverse-ai",
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "promptsverse-ai.firebasestorage.app",
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "643305778874",
+  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:643305778874:web:44e92dc6109479f04c9c83",
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-L1YHXNBH4T"
 };
 
 // Initialize Firebase once
-const app = initializeApp(firebaseConfig);
+export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const auth = getAuth(app);
 export const db = getFirestore(app);
-export const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
 export const googleProvider = new GoogleAuthProvider();
+
+// Enable browserLocalPersistence
+setPersistence(auth, browserLocalPersistence).catch(() => {
+  /* ignore persistence error in constrained contexts */
+});
+
+// Lazy Analytics initialization wrapped in isSupported() and try/catch
+export let analytics: any = null;
+if (typeof window !== "undefined") {
+  isSupported().then((supported) => {
+    if (supported) {
+      try {
+        analytics = getAnalytics(app);
+      } catch (err) {
+        console.warn("[Analytics] Initialization notice:", err);
+      }
+    }
+  }).catch(() => {
+    /* Analytics blocked by ad-blocker or unsupported environment */
+  });
+}
 
 export enum OperationType {
   CREATE = 'create',
@@ -76,11 +85,11 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
-      userId: auth.currentUser?.uid,
-      email: auth.currentUser?.email,
-      emailVerified: auth.currentUser?.emailVerified,
-      isAnonymous: auth.currentUser?.isAnonymous,
-      tenantId: auth.currentUser?.tenantId,
+      userId: auth.currentUser?.uid || null,
+      email: auth.currentUser?.email || null,
+      emailVerified: auth.currentUser?.emailVerified || false,
+      isAnonymous: auth.currentUser?.isAnonymous || false,
+      tenantId: auth.currentUser?.tenantId || null,
       providerInfo: auth.currentUser?.providerData?.map(provider => ({
         providerId: provider.providerId,
         email: provider.email,
@@ -89,45 +98,53 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.warn('Firestore Operation Notice:', errInfo);
+  console.warn('[Firestore Operation Notice]', JSON.stringify(errInfo));
 }
 
-// Connection test - safe check without forced server throw
+// Connection test
 export async function testConnection() {
   try {
-    // Optional gentle connection check
+    await getDocFromServer(doc(db, 'siteConfigs', 'stats')).catch(() => {});
   } catch (error) {
-    console.warn("Firestore connection pending or offline mode enabled");
+    console.warn("[Firestore] Connection check offline mode or pending");
   }
 }
 
-// User role check
+// User role check — verifies custom claims first, falls back to users doc
 export async function getUserRole(user: User | null): Promise<'admin' | 'user'> {
   if (!user) return 'user';
   try {
+    // Check custom claims token first
+    const tokenResult = await user.getIdTokenResult(true).catch(() => null);
+    if (tokenResult && tokenResult.claims && tokenResult.claims.admin === true) {
+      return 'admin';
+    }
+
+    // Fallback: check Firestore users collection
     const userSnap = await getDoc(doc(db, 'users', user.uid));
     if (userSnap.exists() && userSnap.data()?.role === 'admin') {
       return 'admin';
     }
   } catch (err) {
-    console.warn("Could not fetch user role:", err);
+    console.warn("[Auth] Could not fetch user role:", err);
   }
   return 'user';
 }
 
 // Sync user document upon authentication
 export async function syncUserDoc(user: User) {
+  if (!user) return;
   const userRef = doc(db, 'users', user.uid);
   try {
     const snap = await getDoc(userRef);
-    const role = snap.exists() ? snap.data()?.role || 'user' : 'user';
+    const existingRole = snap.exists() ? snap.data()?.role || 'user' : 'user';
     
     await setDoc(userRef, {
       uid: user.uid,
       email: user.email || '',
       displayName: user.displayName || user.email?.split('@')[0] || 'PromptVerse Creator',
       photoURL: user.photoURL || '',
-      role: role,
+      role: existingRole,
       updatedAt: serverTimestamp(),
       ...(snap.exists() ? {} : { createdAt: serverTimestamp() })
     }, { merge: true });
@@ -170,17 +187,13 @@ export async function uploadToCloudinary(file: File): Promise<string> {
     throw new Error('Cloudinary response missing secure_url');
   }
   
-  // Apply responsive widths, automatic format selection, and intelligent quality adjustments (f_auto, q_auto)
-  let optimizedUrl = data.secure_url;
-  if (optimizedUrl.includes('/upload/') && !optimizedUrl.includes('f_auto')) {
-    optimizedUrl = optimizedUrl.replace('/upload/', '/upload/f_auto,q_auto,w_800/');
-  }
+  const rawUrl = data.secure_url;
 
   // Log to Firestore mediaLibrary
   try {
     if (auth.currentUser) {
       await addDoc(collection(db, 'mediaLibrary'), {
-        url: optimizedUrl,
+        url: rawUrl,
         filename: file.name,
         bytes: file.size,
         format: file.type.split('/')[1] || 'png',
@@ -193,7 +206,7 @@ export async function uploadToCloudinary(file: File): Promise<string> {
     console.warn('Failed to log media file to Firestore:', err);
   }
 
-  return optimizedUrl;
+  return rawUrl;
 }
 
 export function optimizeCloudinaryUrl(url: string, width = 800): string {
@@ -203,4 +216,3 @@ export function optimizeCloudinaryUrl(url: string, width = 800): string {
   }
   return url;
 }
-

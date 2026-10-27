@@ -7,157 +7,201 @@ service cloud.firestore {
       allow read, write: if false;
     }
 
-    // Helper functions
+    // =========================================================================
+    // HELPER FUNCTIONS
+    // =========================================================================
+
     function isSignedIn() {
       return request.auth != null;
     }
 
-    // Checks if the request author matches the targeted user
     function isOwner(userId) {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Pure Firestore user role-based check
+    // Role check: Custom claim token first, fallback to Firestore user document
     function isAdmin() {
-      return isSignedIn() && 
-        exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isSignedIn() && (
+        (request.auth.token.keys().hasAll(['admin']) && request.auth.token.admin == true) ||
+        (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
+         get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
+      );
     }
 
-    // Prompts Collection
+    function isValidString(val, minLen, maxLen) {
+      return val is string && val.size() >= minLen && val.size() <= maxLen;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isServerTimestamp(val) {
+      return val is timestamp || val == request.time;
+    }
+
+    // =========================================================================
+    // PROMPTS COLLECTION
+    // =========================================================================
+
     match /prompts/{promptId} {
-      // Anyone can read approved prompts
-      allow read: if true;
-      
-      // Signed in users can create prompts
-      allow create: if isSignedIn();
+      // Approved prompts are public. Pending/rejected are restricted to owner or admin.
+      allow read: if (resource.data.status == 'approved') || 
+                     (isSignedIn() && resource.data.creatorId == request.auth.uid) || 
+                     isAdmin();
 
-      // Admins can update anything. Users can only update their own prompts if they are drafts or pending.
-      // Additionally, signed-in users can increment engagement counters on approved prompts.
+      // Creation by authenticated users — forced into 'pending' status
+      allow create: if isSignedIn() &&
+        request.resource.data.creatorId == request.auth.uid &&
+        request.resource.data.status == 'pending' &&
+        request.resource.data.featured == false &&
+        request.resource.data.trending == false &&
+        request.resource.data.views == 0 &&
+        request.resource.data.likes == 0 &&
+        request.resource.data.downloads == 0 &&
+        request.resource.data.copyCount == 0 &&
+        isValidString(request.resource.data.title, 5, 120) &&
+        isValidString(request.resource.data.prompt, 10, 5000) &&
+        (!('negative' in request.resource.data) || isValidString(request.resource.data.negative, 0, 1000)) &&
+        (!('tags' in request.resource.data) || (request.resource.data.tags is list && request.resource.data.tags.size() <= 10));
+
+      // Updates: Admins can update anything.
+      // Owners can update title/prompt/negative/tags while pending or draft (cannot change status/counters/creatorId/featured/trending).
+      // Non-owners can increment counters by exactly +1 on approved prompts.
       allow update: if isAdmin() || (
-        isSignedIn() && (
-          (resource.data.creatorId == request.auth.uid && (resource.data.status == 'draft' || resource.data.status == 'pending')) ||
-          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views', 'likes', 'downloads', 'copyCount'])
+        isSignedIn() && resource.data.status == 'approved' && (
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) && request.resource.data.views == resource.data.views + 1) ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']) && request.resource.data.likes == resource.data.likes + 1) ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['downloads']) && request.resource.data.downloads == resource.data.downloads + 1) ||
+          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['copyCount']) && request.resource.data.copyCount == resource.data.copyCount + 1)
         )
+      ) || (
+        isSignedIn() && 
+        resource.data.creatorId == request.auth.uid && 
+        (resource.data.status == 'pending' || resource.data.status == 'draft') &&
+        request.resource.data.creatorId == resource.data.creatorId &&
+        request.resource.data.status == resource.data.status &&
+        request.resource.data.featured == resource.data.featured &&
+        request.resource.data.trending == resource.data.trending &&
+        request.resource.data.views == resource.data.views &&
+        request.resource.data.likes == resource.data.likes &&
+        request.resource.data.downloads == resource.data.downloads &&
+        request.resource.data.copyCount == resource.data.copyCount &&
+        isValidString(request.resource.data.title, 5, 120) &&
+        isValidString(request.resource.data.prompt, 10, 5000)
       );
 
-      // Admins can delete anything. Users can delete their own drafts.
+      // Deletion: Admins or owner deleting their pending/draft prompt
       allow delete: if isAdmin() || (
-        isSignedIn() && resource.data.creatorId == request.auth.uid && resource.data.status == 'draft'
+        isSignedIn() && resource.data.creatorId == request.auth.uid && (resource.data.status == 'pending' || resource.data.status == 'draft')
       );
     }
 
-    // Categories Collection
+    // =========================================================================
+    // CATEGORIES, TOOLS, COLLECTIONS, CAMPAIGNS, SEARCH ANALYTICS
+    // =========================================================================
+
     match /categories/{categoryId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // AI Tools Collection (admin managed, publicly readable)
     match /aiTools/{toolId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Seasonal / Featured Collections
     match /collections/{collectionId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Seasonal Campaigns (publicly readable, admin writable)
     match /seasonalCampaigns/{campaignId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Search Analytics (publicly readable for top searches, admin writable)
     match /searchAnalytics/{docId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Sponsored Ads Collection (publicly readable for ad rendering, admin writable)
     match /sponsoredAds/{adId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Ad Events — impression/click tracking (anyone can create, admin reads/manages)
     match /adEvents/{eventId} {
-      allow create: if true;
-      allow read: if isAdmin();
-      allow update, delete: if isAdmin();
+      allow create: if isValidString(request.resource.data.adId, 1, 100) &&
+                       isValidString(request.resource.data.type, 1, 20);
+      allow read, update, delete: if isAdmin();
     }
 
-    // Site Settings (publicly readable, admin writable)
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Blogs Collection (publicly readable, admin writable)
     match /blogs/{blogId} {
-      allow read: if true;
+      allow read: if (resource.data.status == 'published') || isAdmin();
       allow write: if isAdmin();
     }
 
-    // Static Pages Collection (publicly readable, admin writable)
     match /staticPages/{pageId} {
       allow read: if true;
       allow write: if isAdmin();
     }
 
-    // Media Library logs (users can read/write their own logs, admins can access all)
     match /mediaLibrary/{mediaId} {
       allow read: if isAdmin() || (isSignedIn() && resource.data.uploadedBy == request.auth.uid);
       allow create: if isSignedIn() && request.resource.data.uploadedBy == request.auth.uid;
-      allow update: if isAdmin() || (isSignedIn() && resource.data.uploadedBy == request.auth.uid);
-      allow delete: if isAdmin() || (isSignedIn() && resource.data.uploadedBy == request.auth.uid);
+      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.uploadedBy == request.auth.uid);
     }
 
-    // Contact Form Submissions (publicly writable, admin readable/writable)
     match /contactSubmissions/{submissionId} {
-      allow create: if true;
+      allow create: if isValidString(request.resource.data.name, 2, 100) &&
+                       isValidString(request.resource.data.email, 5, 120) &&
+                       isValidString(request.resource.data.message, 5, 2000);
       allow read, update, delete: if isAdmin();
     }
 
-    // Site Configurations (Hero, Stats, Banners - publicly readable, admin writable or stats copiedToday update)
     match /siteConfigs/{configId} {
       allow read: if true;
       allow write: if isAdmin();
-      allow update: if configId == 'stats' && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['copiedToday']);
+      allow update: if configId == 'stats' &&
+                       isSignedIn() &&
+                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['copiedToday']) &&
+                       request.resource.data.copiedToday == resource.data.copiedToday + 1;
     }
 
-    // Admin Activity Logs (admin only)
     match /adminLogs/{logId} {
-      allow read: if isAdmin();
-      allow create: if isAdmin();
+      allow read, create: if isAdmin();
       allow update, delete: if false;
     }
 
-    // Search Logs (users can log queries, only admins can read)
     match /searchLogs/{logId} {
       allow read: if isAdmin();
-      allow create: if isSignedIn();
-      allow update: if isAdmin();
-      allow delete: if false;
+      allow create: if isSignedIn() && isValidString(request.resource.data.query, 1, 200);
+      allow update, delete: if false;
     }
 
-    // Users Collection
+    // =========================================================================
+    // USERS COLLECTION & SUBCOLLECTIONS
+    // =========================================================================
+
     match /users/{userId} {
-      allow read: if isSignedIn();
-      // Ensure users cannot promote themselves or create profiles with roles other than 'user'
+      // User records are private to owner or admin
+      allow read: if isOwner(userId) || isAdmin();
+      
+      // Prevent user self-promotion to admin
       allow create: if isOwner(userId) && request.resource.data.role == 'user';
       allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])) || isAdmin();
       allow delete: if isAdmin();
 
-      // User Bookmarks Subcollection
       match /bookmarks/{bookmarkId} {
         allow read, write: if isOwner(userId) || isAdmin();
       }
 
-      // User Likes Subcollection
       match /likes/{likeId} {
         allow read, write: if isOwner(userId) || isAdmin();
       }
