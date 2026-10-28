@@ -1,202 +1,131 @@
-@import "tailwindcss";
-
-@source "../index.html";
-@source "../admin.html";
-@source "../src";
-
-@theme {
-  --font-sans: 'Plus Jakarta Sans', sans-serif;
-  --font-mono: 'JetBrains Mono', 'Fira Code', 'Courier New', monospace;
-
-  --color-brand-green: #2d8a45;
-  --color-brand-green-dark: #1a5c2a;
-  --color-brand-green-pale: #e8f5ec;
-  --color-brand-yellow: #f5c518;
-  --color-brand-yellow-light: #fff9e6;
-  --color-brand-yellow-hover: #e5b800;
-  --color-brand-orange: #d95d1e;
-  --color-brand-orange-dark: #b8430e;
-  --color-brand-orange-light: #fff2eb;
-  --color-brand-bg: #f4f7f5;
-  --color-brand-card: #ffffff;
-  --color-brand-border: #dde8df;
-  --color-brand-text: #1a2e1e;
-  --color-brand-text-sec: #5a7260;
-  --color-brand-text-muted: #9ab09e;
-  --color-brand-error: #c0392b;
-
-  --shadow-glass: 0 8px 32px 0 rgba(26, 92, 42, 0.06);
-  --shadow-card: 0 4px 20px -2px rgba(26, 46, 30, 0.04);
-  --shadow-card-hover: 0 12px 30px -4px rgba(45, 138, 69, 0.16);
-  --shadow-floating: 0 20px 40px -15px rgba(26, 92, 42, 0.08);
-}
-
 /* =============================================================================
-   BRAND THEME & DESIGN SYSTEM TOKENS
+   DESIGN SYSTEM — Green & Yellow Clean Light Palette
    ============================================================================= */
 :root {
-  /* Background Colors */
   --bg: #f4f7f5;
   --card-bg: #ffffff;
   --green-pale: #e8f5ec;
   --yellow-light: #fff9e6;
-  --orange-light: #fff2eb;
-
-  /* Theme & Brand Colors */
+  --yellow-soft: #fff9e6;
+  --hero-gradient: linear-gradient(135deg, #e8f5ec 0%, #fff9e6 100%);
+  --cta-gradient: linear-gradient(135deg, #1a5c2a, #2d8a45);
   --green: #2d8a45;
   --green-dark: #1a5c2a;
   --yellow: #f5c518;
-  --yellow-hover: #e5b800;
-  
-  /* Dark Orange Accent (Hot / Trending / Highlights) */
-  --dark-orange: #d95d1e;
-  --orange-dark: #b8430e;
-
-  /* Typography Colors */
   --text-primary: #1a2e1e;
   --text-secondary: #5a7260;
   --text-muted: #9ab09e;
-
-  /* System Borders & Validation */
   --border: #dde8df;
   --er: #c0392b;
-
-  /* Social Colors */
-  --wa-teal: #128C7E;
-  --wa-green: #25D366;
-
-  /* Brand Gradients */
-  --hero-gradient: linear-gradient(135deg, #e8f5ec 0%, #fff9e6 100%);
-  --cta-gradient: linear-gradient(135deg, #1a5c2a 0%, #2d8a45 100%);
-  --orange-gradient: linear-gradient(135deg, #d95d1e 0%, #b8430e 100%);
 }
 
-/* Base Body Styles */
 body {
-  background-color: var(--bg);
+  background-color: var(--bg) !important;
   color: var(--text-primary);
 }
 
-/* Background Gradients */
-.bg-hero-gradient {
-  background: var(--hero-gradient);
-}
-.bg-cta-gradient {
-  background: var(--cta-gradient);
-}
-.bg-orange-gradient {
-  background: var(--orange-gradient);
-}
-
-/* Button Colors */
-.btn-brand-primary {
-  background-color: #2d8a45;
-  color: #ffffff;
-  transition: all 0.2s ease;
-}
-.btn-brand-primary:hover {
-  background-color: #1a5c2a;
-}
-
-.btn-brand-yellow {
-  background-color: #f5c518;
-  color: #1a5c2a;
+/* Base and Variant Button Styles */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.375rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.75rem;
   font-weight: 700;
-  transition: all 0.2s ease;
+  font-size: 0.75rem;
+  background-color: #ffffff;
+  border: 1px solid var(--border);
+  color: var(--text-secondary);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+  text-decoration: none;
 }
-.btn-brand-yellow:hover {
-  background-color: #e5b800;
-}
-
-.btn-brand-orange {
-  background-color: #d95d1e;
-  color: #ffffff;
-  font-weight: 700;
-  transition: all 0.2s ease;
-}
-.btn-brand-orange:hover {
-  background-color: #b8430e;
+.btn:hover {
+  border-color: var(--green);
+  color: var(--green);
 }
 
-.btn-brand-outline {
-  background-color: transparent;
-  border: 1px solid #dde8df;
-  color: #5a7260;
-  transition: all 0.2s ease;
+/* Primary Action Button (.btn.by) */
+.btn.by,
+button.btn-primary-action {
+  background-color: var(--green) !important;
+  color: #ffffff !important;
+  border-color: var(--green) !important;
 }
-.btn-brand-outline:hover {
-  color: #2d8a45;
-  border-color: #2d8a45;
-  background-color: #e8f5ec;
+.btn.by:hover,
+button.btn-primary-action:hover {
+  background-color: var(--green-dark) !important;
+  border-color: var(--green-dark) !important;
+  color: #ffffff !important;
 }
 
+/* Accent Yellow Button (.btn.byy) */
+.btn.byy {
+  background-color: var(--yellow) !important;
+  color: var(--green-dark) !important;
+  border-color: var(--yellow) !important;
+}
+.btn.byy:hover {
+  background-color: #e5b800 !important;
+  border-color: #e5b800 !important;
+}
+
+/* WhatsApp Share Button */
 .btn-whatsapp {
-  background: linear-gradient(135deg, #128C7E, #25D366);
-  color: #ffffff;
-  transition: all 0.2s ease;
+  background: #25D366 !important;
+  color: #ffffff !important;
+  border-color: #25D366 !important;
 }
 .btn-whatsapp:hover {
-  filter: brightness(1.08);
+  background: #128C7E !important;
+  border-color: #128C7E !important;
 }
 
-/* Badge Utilities */
-.badge-hot-orange {
-  background-color: #fff2eb;
-  color: #d95d1e;
-  border: 1px solid #fcdad0;
+/* Hero and CTA Gradients */
+.hero-gradient-bg {
+  background: var(--hero-gradient) !important;
 }
-.badge-brand-green {
-  background-color: #e8f5ec;
-  color: #1a5c2a;
-  border: 1px solid #cce8d4;
-}
-.badge-brand-yellow {
-  background-color: #fff9e6;
-  color: #8c6e00;
-  border: 1px solid #fae8a8;
+.cta-gradient-bg {
+  background: var(--cta-gradient) !important;
 }
 
 /* Card Preview Studio Palettes */
 .palette-mana-green {
   --palette-accent: #2d8a45;
-  --palette-bg: #f4f7f5;
-  --palette-text: #1a2e1e;
-  background-color: var(--palette-bg);
-  color: var(--palette-text);
-  border-color: #dde8df;
+  background-color: #f4f7f5 !important;
+  color: #1a2e1e !important;
+  border-color: #dde8df !important;
 }
-.palette-badgebee {
+.palette-mana-green .accent-text { color: #2d8a45 !important; }
+.palette-mana-green .accent-bg { background-color: #2d8a45 !important; color: #ffffff !important; }
+
+.palette-badgebee-yellow {
   --palette-accent: #f5c518;
-  --palette-bg: #ffffff;
-  --palette-text: #171B24;
-  background-color: var(--palette-bg);
-  color: var(--palette-text);
-  border-color: #fae8a8;
+  background-color: #ffffff !important;
+  color: #171B24 !important;
+  border-color: #ffe799 !important;
 }
+.palette-badgebee-yellow .accent-text { color: #f5c518 !important; }
+.palette-badgebee-yellow .accent-bg { background-color: #f5c518 !important; color: #1a5c2a !important; }
+
 .palette-warm-cream {
   --palette-accent: #E8B923;
-  --palette-bg: #FFF8E7;
-  --palette-text: #3B2F1E;
-  background-color: var(--palette-bg);
-  color: var(--palette-text);
-  border-color: #f7e6b8;
+  background-color: #FFF8E7 !important;
+  color: #3B2F1E !important;
+  border-color: #f2e2be !important;
 }
+.palette-warm-cream .accent-text { color: #E8B923 !important; }
+.palette-warm-cream .accent-bg { background-color: #E8B923 !important; color: #ffffff !important; }
+
 .palette-fresh-green {
   --palette-accent: #16834A;
-  --palette-bg: #F1FBF4;
-  --palette-text: #12301F;
-  background-color: var(--palette-bg);
-  color: var(--palette-text);
-  border-color: #caeed3;
+  background-color: #F1FBF4 !important;
+  color: #12301F !important;
+  border-color: #c9eed7 !important;
 }
-.palette-dark-orange {
-  --palette-accent: #d95d1e;
-  --palette-bg: #fff8f5;
-  --palette-text: #3d1b0d;
-  background-color: var(--palette-bg);
-  color: var(--palette-text);
-  border-color: #fcdad0;
-}
+.palette-fresh-green .accent-text { color: #16834A !important; }
+.palette-fresh-green .accent-bg { background-color: #16834A !important; color: #ffffff !important; }
 
 /* Custom Scrollbar & Utility Animations */
 ::-webkit-scrollbar {
@@ -204,14 +133,14 @@ body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #f4f7f5;
+  background: var(--bg);
 }
 ::-webkit-scrollbar-thumb {
-  background: #dde8df;
+  background: #c5d7c8;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #9ab09e;
+  background: var(--green);
 }
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
@@ -224,26 +153,20 @@ body {
   background: rgba(255, 255, 255, 0.92);
   backdrop-filter: blur(14px);
   -webkit-backdrop-filter: blur(14px);
-  border-bottom: 1px solid #dde8df;
 }
 .glass-badge {
   background: rgba(255, 255, 255, 0.94);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  border: 1px solid #dde8df;
+  border: 1px solid var(--border);
 }
 .gradient-text {
-  background: linear-gradient(135deg, #1a5c2a 0%, #2d8a45 60%, #d95d1e 100%);
+  background: linear-gradient(135deg, var(--green-dark) 0%, var(--green) 50%, var(--yellow) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 .gradient-text-gold {
-  background: linear-gradient(135deg, #f5c518 0%, #d95d1e 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-}
-.gradient-text-orange {
-  background: linear-gradient(135deg, #d95d1e 0%, #b8430e 100%);
+  background: linear-gradient(135deg, #f5c518 0%, #e5b800 50%, #1a5c2a 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
@@ -347,17 +270,25 @@ body {
   100% { transform: translate(100%, 100%) rotate(30deg); }
 }
 
-/* Ad system styling */
+/* =============================================================================
+   AD SYSTEM — Containers, Labels & CLS Prevention
+   ============================================================================= */
+
+/* CLS prevention: reserve space for ad containers, use content-visibility */
 .ad-container {
   position: relative;
   overflow: hidden;
   contain: layout style;
   content-visibility: auto;
 }
+
+/* Hide empty ad containers to prevent blank gaps */
 .ad-container:empty {
   display: none;
   min-height: 0 !important;
 }
+
+/* Sponsored / Ad label — always visible, compliant with AdSense policies */
 .ad-sponsored-label {
   position: absolute;
   top: 8px;
@@ -372,4 +303,42 @@ body {
   color: #64748b;
   z-index: 5;
   pointer-events: none;
+}
+
+/* Sponsored banner wrapper — premium card styling */
+.ad-sponsored-banner {
+  position: relative;
+  transition: box-shadow 0.2s ease, transform 0.2s ease;
+}
+.ad-sponsored-banner:hover {
+  box-shadow: 0 8px 24px -4px rgba(37, 99, 235, 0.1);
+}
+
+/* Sponsored prompt card — distinguishing border highlight */
+.ad-sponsored-card {
+  position: relative;
+}
+.ad-sponsored-card > div {
+  border-color: rgba(59, 130, 246, 0.25);
+}
+
+/* AdSense wrapper — responsive and CLS-safe */
+.ad-adsense-wrapper {
+  width: 100%;
+  overflow: hidden;
+  text-align: center;
+}
+.ad-adsense-wrapper ins {
+  display: block;
+  width: 100%;
+}
+
+/* Responsive ad container sizing */
+@media (max-width: 640px) {
+  .ad-container[data-ad-placement="sidebar"] {
+    min-height: 100px !important;
+  }
+  .ad-container[data-ad-placement="footer-banner"] {
+    min-height: 50px !important;
+  }
 }

@@ -1,0 +1,6 @@
+{
+  "name": "PromptVerse AI",
+  "description": "Google for AI Prompts - The world's largest AI prompt search engine & marketplace for ChatGPT, Midjourney, Flux, Claude, Gemini, and Sora.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

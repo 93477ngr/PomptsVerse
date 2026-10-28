@@ -1,59 +1,50 @@
-import { initializeApp, getApps } from "firebase/app";
+import { initializeApp } from "firebase/app";
 import { 
   getAuth, 
   GoogleAuthProvider, 
-  User,
-  setPersistence,
-  browserLocalPersistence
+  signInWithPopup, 
+  signInWithEmailAndPassword, 
+  createUserWithEmailAndPassword, 
+  signOut as firebaseSignOut, 
+  onAuthStateChanged,
+  User
 } from "firebase/auth";
 import { 
   getFirestore, 
+  collection, 
   doc, 
+  getDocs, 
   getDoc, 
   setDoc, 
   addDoc, 
-  collection,
+  updateDoc, 
+  deleteDoc, 
+  onSnapshot, 
+  query, 
+  where, 
+  orderBy,
   serverTimestamp,
-  getDocFromServer
+  getDocFromServer,
+  writeBatch
 } from "firebase/firestore";
-import { getAnalytics, isSupported } from "firebase/analytics";
+import { getAnalytics } from "firebase/analytics";
 
 export const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY || "AIzaSyBlG12KHQmiAw28sgULgkvyd1G829EU0rg",
-  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN || "promptsverse-ai.firebaseapp.com",
-  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID || "promptsverse-ai",
-  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET || "promptsverse-ai.firebasestorage.app",
-  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID || "643305778874",
-  appId: import.meta.env.VITE_FIREBASE_APP_ID || "1:643305778874:web:44e92dc6109479f04c9c83",
-  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID || "G-L1YHXNBH4T"
+  apiKey: "AIzaSyBlG12KHQmiAw28sgULgkvyd1G829EU0rg",
+  authDomain: "promptsverse-ai.firebaseapp.com",
+  projectId: "promptsverse-ai",
+  storageBucket: "promptsverse-ai.firebasestorage.app",
+  messagingSenderId: "643305778874",
+  appId: "1:643305778874:web:44e92dc6109479f04c9c83",
+  measurementId: "G-L1YHXNBH4T"
 };
 
 // Initialize Firebase once
-export const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 export const db = getFirestore(app);
+export const analytics = typeof window !== "undefined" ? getAnalytics(app) : null;
 export const googleProvider = new GoogleAuthProvider();
-
-// Enable browserLocalPersistence
-setPersistence(auth, browserLocalPersistence).catch(() => {
-  /* ignore persistence error in constrained contexts */
-});
-
-// Lazy Analytics initialization wrapped in isSupported() and try/catch
-export let analytics: any = null;
-if (typeof window !== "undefined") {
-  isSupported().then((supported) => {
-    if (supported) {
-      try {
-        analytics = getAnalytics(app);
-      } catch (err) {
-        console.warn("[Analytics] Initialization notice:", err);
-      }
-    }
-  }).catch(() => {
-    /* Analytics blocked by ad-blocker or unsupported environment */
-  });
-}
 
 export enum OperationType {
   CREATE = 'create',
@@ -85,11 +76,11 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
   const errInfo: FirestoreErrorInfo = {
     error: error instanceof Error ? error.message : String(error),
     authInfo: {
-      userId: auth.currentUser?.uid || null,
-      email: auth.currentUser?.email || null,
-      emailVerified: auth.currentUser?.emailVerified || false,
-      isAnonymous: auth.currentUser?.isAnonymous || false,
-      tenantId: auth.currentUser?.tenantId || null,
+      userId: auth.currentUser?.uid,
+      email: auth.currentUser?.email,
+      emailVerified: auth.currentUser?.emailVerified,
+      isAnonymous: auth.currentUser?.isAnonymous,
+      tenantId: auth.currentUser?.tenantId,
       providerInfo: auth.currentUser?.providerData?.map(provider => ({
         providerId: provider.providerId,
         email: provider.email,
@@ -98,53 +89,57 @@ export function handleFirestoreError(error: unknown, operationType: OperationTyp
     operationType,
     path
   };
-  console.warn('[Firestore Operation Notice]', JSON.stringify(errInfo));
+  console.warn('Firestore Operation Notice:', errInfo);
 }
 
-// Connection test
+// Connection test - safe check without forced server throw
 export async function testConnection() {
   try {
-    await getDocFromServer(doc(db, 'siteConfigs', 'stats')).catch(() => {});
+    // Optional gentle connection check
   } catch (error) {
-    console.warn("[Firestore] Connection check offline mode or pending");
+    console.warn("Firestore connection pending or offline mode enabled");
   }
 }
 
-// User role check — verifies custom claims first, falls back to users doc
+export const ADMIN_EMAILS = [
+  'gangareddynaredla24925@gmail.com',
+  'localride369@gmail.com'
+];
+
+// User role check
 export async function getUserRole(user: User | null): Promise<'admin' | 'user'> {
   if (!user) return 'user';
+  const email = (user.email || '').toLowerCase().trim();
+  if (ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email)) {
+    return 'admin';
+  }
   try {
-    // Check custom claims token first
-    const tokenResult = await user.getIdTokenResult(true).catch(() => null);
-    if (tokenResult && tokenResult.claims && tokenResult.claims.admin === true) {
-      return 'admin';
-    }
-
-    // Fallback: check Firestore users collection
     const userSnap = await getDoc(doc(db, 'users', user.uid));
     if (userSnap.exists() && userSnap.data()?.role === 'admin') {
       return 'admin';
     }
   } catch (err) {
-    console.warn("[Auth] Could not fetch user role:", err);
+    console.warn("Could not fetch user role:", err);
   }
   return 'user';
 }
 
 // Sync user document upon authentication
 export async function syncUserDoc(user: User) {
-  if (!user) return;
   const userRef = doc(db, 'users', user.uid);
   try {
+    const email = (user.email || '').toLowerCase().trim();
+    const isHardcodedAdmin = ADMIN_EMAILS.map(e => e.toLowerCase()).includes(email);
     const snap = await getDoc(userRef);
-    const existingRole = snap.exists() ? snap.data()?.role || 'user' : 'user';
+    const existingRole = snap.exists() ? snap.data()?.role : null;
+    const role = isHardcodedAdmin ? 'admin' : (existingRole || 'user');
     
     await setDoc(userRef, {
       uid: user.uid,
       email: user.email || '',
-      displayName: user.displayName || user.email?.split('@')[0] || 'PromptVerse Creator',
+      displayName: user.displayName || user.email?.split('@')[0] || (isHardcodedAdmin ? 'PromptVerse Admin' : 'PromptVerse Creator'),
       photoURL: user.photoURL || '',
-      role: existingRole,
+      role: role,
       updatedAt: serverTimestamp(),
       ...(snap.exists() ? {} : { createdAt: serverTimestamp() })
     }, { merge: true });
@@ -187,13 +182,17 @@ export async function uploadToCloudinary(file: File): Promise<string> {
     throw new Error('Cloudinary response missing secure_url');
   }
   
-  const rawUrl = data.secure_url;
+  // Apply responsive widths, automatic format selection, and intelligent quality adjustments (f_auto, q_auto)
+  let optimizedUrl = data.secure_url;
+  if (optimizedUrl.includes('/upload/') && !optimizedUrl.includes('f_auto')) {
+    optimizedUrl = optimizedUrl.replace('/upload/', '/upload/f_auto,q_auto,w_800/');
+  }
 
   // Log to Firestore mediaLibrary
   try {
     if (auth.currentUser) {
       await addDoc(collection(db, 'mediaLibrary'), {
-        url: rawUrl,
+        url: optimizedUrl,
         filename: file.name,
         bytes: file.size,
         format: file.type.split('/')[1] || 'png',
@@ -206,7 +205,7 @@ export async function uploadToCloudinary(file: File): Promise<string> {
     console.warn('Failed to log media file to Firestore:', err);
   }
 
-  return rawUrl;
+  return optimizedUrl;
 }
 
 export function optimizeCloudinaryUrl(url: string, width = 800): string {
@@ -216,3 +215,4 @@ export function optimizeCloudinaryUrl(url: string, width = 800): string {
   }
   return url;
 }
+

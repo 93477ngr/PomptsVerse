@@ -2,15 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Default deny catch-all
-    match /{document=**} {
-      allow read, write: if false;
-    }
-
-    // =========================================================================
-    // HELPER FUNCTIONS
-    // =========================================================================
-
+    // Helper functions
     function isSignedIn() {
       return request.auth != null;
     }
@@ -19,183 +11,117 @@ service cloud.firestore {
       return isSignedIn() && request.auth.uid == userId;
     }
 
-    // Role check: Custom claim token first, fallback to Firestore user document
+    // Admin role check: Checks known admin emails or user doc role in Firestore
     function isAdmin() {
       return isSignedIn() && (
-        (request.auth.token.keys().hasAll(['admin']) && request.auth.token.admin == true) ||
+        request.auth.token.email in [
+          'localride369@gmail.com',
+          'gangareddynaredla24925@gmail.com'
+        ] ||
         (exists(/databases/$(database)/documents/users/$(request.auth.uid)) &&
          get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin')
       );
     }
 
-    function isValidString(val, minLen, maxLen) {
-      return val is string && val.size() >= minLen && val.size() <= maxLen;
-    }
-
-    function isValidId(id) {
-      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
-    }
-
-    function isServerTimestamp(val) {
-      return val is timestamp || val == request.time;
-    }
-
-    // =========================================================================
-    // PROMPTS COLLECTION
-    // =========================================================================
-
+    // Prompts Collection - Publicly readable, writeable by signed-in creators & admins
     match /prompts/{promptId} {
-      // Approved prompts are public. Pending/rejected are restricted to owner or admin.
-      allow read: if (resource.data.status == 'approved') || 
-                     (isSignedIn() && resource.data.creatorId == request.auth.uid) || 
-                     isAdmin();
-
-      // Creation by authenticated users — forced into 'pending' status
-      allow create: if isSignedIn() &&
-        request.resource.data.creatorId == request.auth.uid &&
-        request.resource.data.status == 'pending' &&
-        request.resource.data.featured == false &&
-        request.resource.data.trending == false &&
-        request.resource.data.views == 0 &&
-        request.resource.data.likes == 0 &&
-        request.resource.data.downloads == 0 &&
-        request.resource.data.copyCount == 0 &&
-        isValidString(request.resource.data.title, 5, 120) &&
-        isValidString(request.resource.data.prompt, 10, 5000) &&
-        (!('negative' in request.resource.data) || isValidString(request.resource.data.negative, 0, 1000)) &&
-        (!('tags' in request.resource.data) || (request.resource.data.tags is list && request.resource.data.tags.size() <= 10));
-
-      // Updates: Admins can update anything.
-      // Owners can update title/prompt/negative/tags while pending or draft (cannot change status/counters/creatorId/featured/trending).
-      // Non-owners can increment counters by exactly +1 on approved prompts.
-      allow update: if isAdmin() || (
-        isSignedIn() && resource.data.status == 'approved' && (
-          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['views']) && request.resource.data.views == resource.data.views + 1) ||
-          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['likes']) && request.resource.data.likes == resource.data.likes + 1) ||
-          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['downloads']) && request.resource.data.downloads == resource.data.downloads + 1) ||
-          (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['copyCount']) && request.resource.data.copyCount == resource.data.copyCount + 1)
-        )
-      ) || (
-        isSignedIn() && 
-        resource.data.creatorId == request.auth.uid && 
-        (resource.data.status == 'pending' || resource.data.status == 'draft') &&
-        request.resource.data.creatorId == resource.data.creatorId &&
-        request.resource.data.status == resource.data.status &&
-        request.resource.data.featured == resource.data.featured &&
-        request.resource.data.trending == resource.data.trending &&
-        request.resource.data.views == resource.data.views &&
-        request.resource.data.likes == resource.data.likes &&
-        request.resource.data.downloads == resource.data.downloads &&
-        request.resource.data.copyCount == resource.data.copyCount &&
-        isValidString(request.resource.data.title, 5, 120) &&
-        isValidString(request.resource.data.prompt, 10, 5000)
-      );
-
-      // Deletion: Admins or owner deleting their pending/draft prompt
-      allow delete: if isAdmin() || (
-        isSignedIn() && resource.data.creatorId == request.auth.uid && (resource.data.status == 'pending' || resource.data.status == 'draft')
-      );
+      allow read: if true;
+      allow create: if isSignedIn();
+      allow update: if isSignedIn();
+      allow delete: if isAdmin() || (isSignedIn() && resource.data.creatorId == request.auth.uid);
     }
 
-    // =========================================================================
-    // CATEGORIES, TOOLS, COLLECTIONS, CAMPAIGNS, SEARCH ANALYTICS
-    // =========================================================================
-
+    // Categories (public read, authenticated write)
     match /categories/{categoryId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
+    // AI Tools (public read, authenticated write)
     match /aiTools/{toolId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
+    // Collections (public read, authenticated write)
     match /collections/{collectionId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
+    // Seasonal Campaigns (public read, authenticated write)
     match /seasonalCampaigns/{campaignId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
+    // Search Analytics
     match /searchAnalytics/{docId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
+    // Sponsored Ads
     match /sponsoredAds/{adId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
+    // Ad Events
     match /adEvents/{eventId} {
-      allow create: if isValidString(request.resource.data.adId, 1, 100) &&
-                       isValidString(request.resource.data.type, 1, 20);
-      allow read, update, delete: if isAdmin();
+      allow create: if true;
+      allow read, update, delete: if isSignedIn();
     }
 
+    // Site Settings
     match /settings/{settingId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
+    // Blogs Collection
     match /blogs/{blogId} {
-      allow read: if (resource.data.status == 'published') || isAdmin();
-      allow write: if isAdmin();
+      allow read: if true;
+      allow write: if isSignedIn();
     }
 
+    // Static Pages Collection
     match /staticPages/{pageId} {
       allow read: if true;
-      allow write: if isAdmin();
+      allow write: if isSignedIn();
     }
 
+    // Media Library
     match /mediaLibrary/{mediaId} {
-      allow read: if isAdmin() || (isSignedIn() && resource.data.uploadedBy == request.auth.uid);
-      allow create: if isSignedIn() && request.resource.data.uploadedBy == request.auth.uid;
-      allow update, delete: if isAdmin() || (isSignedIn() && resource.data.uploadedBy == request.auth.uid);
+      allow read, write: if isSignedIn();
     }
 
+    // Contact Form Submissions
     match /contactSubmissions/{submissionId} {
-      allow create: if isValidString(request.resource.data.name, 2, 100) &&
-                       isValidString(request.resource.data.email, 5, 120) &&
-                       isValidString(request.resource.data.message, 5, 2000);
-      allow read, update, delete: if isAdmin();
+      allow create: if true;
+      allow read, update, delete: if isSignedIn();
     }
 
+    // Site Configurations
     match /siteConfigs/{configId} {
       allow read: if true;
-      allow write: if isAdmin();
-      allow update: if configId == 'stats' &&
-                       isSignedIn() &&
-                       request.resource.data.diff(resource.data).affectedKeys().hasOnly(['copiedToday']) &&
-                       request.resource.data.copiedToday == resource.data.copiedToday + 1;
+      allow write: if isSignedIn();
     }
 
+    // Admin Activity Logs
     match /adminLogs/{logId} {
-      allow read, create: if isAdmin();
-      allow update, delete: if false;
+      allow read, write: if isSignedIn();
     }
 
+    // Search Logs
     match /searchLogs/{logId} {
-      allow read: if isAdmin();
-      allow create: if isSignedIn() && isValidString(request.resource.data.query, 1, 200);
-      allow update, delete: if false;
+      allow read, write: if isSignedIn();
     }
 
-    // =========================================================================
-    // USERS COLLECTION & SUBCOLLECTIONS
-    // =========================================================================
-
+    // Users Collection
     match /users/{userId} {
-      // User records are private to owner or admin
-      allow read: if isOwner(userId) || isAdmin();
-      
-      // Prevent user self-promotion to admin
-      allow create: if isOwner(userId) && request.resource.data.role == 'user';
-      allow update: if (isOwner(userId) && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['role'])) || isAdmin();
+      allow read: if isSignedIn();
+      allow create, update: if isSignedIn();
       allow delete: if isAdmin();
 
       match /bookmarks/{bookmarkId} {

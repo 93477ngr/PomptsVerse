@@ -1,0 +1,165 @@
+{
+  "entities": {
+    "Prompt": {
+      "title": "Prompt",
+      "description": "AI prompt repository item",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "tool": { "type": "string", "maxLength": 50 },
+        "category": { "type": "string", "maxLength": 50 },
+        "image": { "type": "string", "maxLength": 1000 },
+        "prompt": { "type": "string", "maxLength": 5000 },
+        "negative": { "type": "string", "maxLength": 1000 },
+        "views": { "type": "number" },
+        "likes": { "type": "number" },
+        "downloads": { "type": "number" },
+        "creator": { "type": "string", "maxLength": 100 },
+        "creatorId": { "type": "string", "maxLength": 128 },
+        "featured": { "type": "boolean" },
+        "trending": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["approved", "pending", "rejected"] }
+      },
+      "required": ["title", "tool", "category", "prompt"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Prompt categories",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 50 },
+        "icon": { "type": "string", "maxLength": 50 },
+        "count": { "type": "number" }
+      },
+      "required": ["name"]
+    },
+    "User": {
+      "title": "User",
+      "description": "User profile and role",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "maxLength": 128 },
+        "email": { "type": "string", "maxLength": 100 },
+        "displayName": { "type": "string", "maxLength": 100 },
+        "photoURL": { "type": "string", "maxLength": 500 },
+        "role": { "type": "string", "enum": ["admin", "user"] }
+      },
+      "required": ["uid", "email"]
+    },
+    "Bookmark": {
+      "title": "Bookmark",
+      "description": "User bookmarked prompts",
+      "type": "object",
+      "properties": {
+        "promptId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["promptId"]
+    },
+    "Like": {
+      "title": "Like",
+      "description": "User liked prompt records",
+      "type": "object",
+      "properties": {
+        "promptId": { "type": "string", "maxLength": 128 }
+      },
+      "required": ["promptId"]
+    },
+    "AITool": {
+      "title": "AITool",
+      "description": "Supported AI tool engine definitions",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "maxLength": 50 },
+        "icon": { "type": "string", "maxLength": 50 },
+        "logoUrl": { "type": "string", "maxLength": 500 },
+        "color": { "type": "string", "maxLength": 50 },
+        "order": { "type": "number" }
+      },
+      "required": ["name"]
+    },
+    "SeasonalCampaign": {
+      "title": "SeasonalCampaign",
+      "description": "Seasonal banners and campaign chips",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string", "maxLength": 200 },
+        "subtitle": { "type": "string", "maxLength": 500 },
+        "tag": { "type": "string", "maxLength": 100 },
+        "searchQuery": { "type": "string", "maxLength": 200 },
+        "bgClass": { "type": "string", "maxLength": 200 },
+        "active": { "type": "boolean" },
+        "order": { "type": "number" }
+      },
+      "required": ["title", "active"]
+    },
+    "SearchAnalytic": {
+      "title": "SearchAnalytic",
+      "description": "Aggregated popular search terms and frequency",
+      "type": "object",
+      "properties": {
+        "query": { "type": "string", "maxLength": 200 },
+        "count": { "type": "number" }
+      },
+      "required": ["query", "count"]
+    },
+    "SiteConfig": {
+      "title": "SiteConfig",
+      "description": "General site config documents such as hero, stats, and community",
+      "type": "object",
+      "properties": {
+        "headline": { "type": "string", "maxLength": 300 },
+        "subtitle": { "type": "string", "maxLength": 500 }
+      }
+    },
+    "Setting": {
+      "title": "Setting",
+      "description": "Site settings documents like contact or adsense",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string", "maxLength": 100 }
+      }
+    }
+  },
+  "firestore": {
+    "/prompts/{promptId}": {
+      "schema": { "$ref": "#/entities/Prompt" },
+      "description": "Collection of all public and admin managed AI prompts"
+    },
+    "/categories/{categoryId}": {
+      "schema": { "$ref": "#/entities/Category" },
+      "description": "Collection of categories"
+    },
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "User profile documents"
+    },
+    "/users/{userId}/bookmarks/{bookmarkId}": {
+      "schema": { "$ref": "#/entities/Bookmark" },
+      "description": "Subcollection of saved/bookmarked prompts for a user"
+    },
+    "/users/{userId}/likes/{likeId}": {
+      "schema": { "$ref": "#/entities/Like" },
+      "description": "Subcollection of liked prompts for a user"
+    },
+    "/aiTools/{toolId}": {
+      "schema": { "$ref": "#/entities/AITool" },
+      "description": "Collection of supported AI generation tools"
+    },
+    "/seasonalCampaigns/{campaignId}": {
+      "schema": { "$ref": "#/entities/SeasonalCampaign" },
+      "description": "Collection of seasonal campaign banners and presets"
+    },
+    "/searchAnalytics/{docId}": {
+      "schema": { "$ref": "#/entities/SearchAnalytic" },
+      "description": "Aggregated search analytics terms"
+    },
+    "/siteConfigs/{configId}": {
+      "schema": { "$ref": "#/entities/SiteConfig" },
+      "description": "Site layout configurations (hero, stats, community)"
+    },
+    "/settings/{settingId}": {
+      "schema": { "$ref": "#/entities/Setting" },
+      "description": "Global application settings (contact, adsense)"
+    }
+  }
+}
