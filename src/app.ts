@@ -138,6 +138,10 @@ let isLoadingMore = false;
 let hasMorePrompts = true;
 let isInitialLoading = true;
 let currentSortType = 'popular'; // 'popular' | 'newest' | 'likes' | 'trending'
+let activeTrendingHashtags: string[] = [
+  '#AIPrompts', '#ChatGPT', '#PromptEngineering', '#MidjourneyPrompt',
+  '#GenerativeAI', '#FluxAI', '#AICreators', '#PromptOfTheDay'
+];
 let currentToolFilter = 'all';   // 'all' | tool name
 let currentEventTheme = 'ai_core';
 let cachedStatsConfig: any = {};
@@ -502,6 +506,22 @@ async function loadSiteConfigs() {
 
         helpers.setMeta('description', data.metaDescription || '');
         helpers.setMeta('keywords', data.searchKeywords || '');
+        if (data.googleVerification) {
+          helpers.setMeta('google-site-verification', data.googleVerification);
+        }
+        if (data.bingVerification) {
+          helpers.setMeta('msvalidate.01', data.bingVerification);
+        }
+        if (data.robotsDirective) {
+          helpers.setMeta('robots', data.robotsDirective);
+        }
+        if (data.author) {
+          helpers.setMeta('author', data.author);
+        }
+        if (Array.isArray(data.trendingHashtags) && data.trendingHashtags.length > 0) {
+          activeTrendingHashtags = [...data.trendingHashtags];
+          renderGalleryTagPills();
+        }
 
         // Canonical URL
         const canonicalVal = data.canonicalUrl || 'https://promptsone.com/';
@@ -520,7 +540,7 @@ async function loadSiteConfigs() {
         helpers.setProperty('og:description', data.ogDescription || data.metaDescription || '');
         helpers.setProperty('og:image', data.ogImage || data.logoUrl || '');
         helpers.setProperty('og:url', canonicalVal);
-        helpers.setProperty('og:site_name', data.brandName || 'PromptsOne');
+        helpers.setProperty('og:site_name', data.ogSiteName || data.brandName || 'PromptsOne');
 
         // Twitter Cards
         helpers.setMeta('twitter:card', data.twitterCard || 'summary_large_image');
@@ -528,6 +548,10 @@ async function loadSiteConfigs() {
         helpers.setMeta('twitter:description', data.ogDescription || data.metaDescription || '');
         helpers.setMeta('twitter:image', data.ogImage || data.logoUrl || '');
         helpers.setMeta('twitter:url', canonicalVal);
+        if (data.twitterCreator) {
+          helpers.setMeta('twitter:creator', data.twitterCreator);
+          helpers.setMeta('twitter:site', data.twitterCreator);
+        }
         
         // JSON-LD Structured Data
         let script = document.querySelector("script[type='application/ld+json']") as HTMLScriptElement | null;
@@ -568,6 +592,48 @@ async function loadSiteConfigs() {
     }, (err) => {
       handleFirestoreError(err, OperationType.GET, 'settings/site');
     });
+
+    // Real-Time Listener for dedicated settings/seo
+    onSnapshot(doc(db, 'settings', 'seo'), (snap) => {
+      if (snap.exists()) {
+        const seo = snap.data();
+        if (seo.seoTitle) document.title = seo.seoTitle;
+        const setMetaHelper = (name: string, val: string) => {
+          if (!val) return;
+          let el = document.querySelector(`meta[name='${name}']`);
+          if (!el) { el = document.createElement('meta'); el.setAttribute('name', name); document.head.appendChild(el); }
+          el.setAttribute('content', val);
+        };
+        const setPropHelper = (prop: string, val: string) => {
+          if (!val) return;
+          let el = document.querySelector(`meta[property='${prop}']`);
+          if (!el) { el = document.createElement('meta'); el.setAttribute('property', prop); document.head.appendChild(el); }
+          el.setAttribute('content', val);
+        };
+        if (seo.metaDescription) setMetaHelper('description', seo.metaDescription);
+        if (seo.searchKeywords) setMetaHelper('keywords', seo.searchKeywords);
+        if (seo.googleVerification) setMetaHelper('google-site-verification', seo.googleVerification);
+        if (seo.bingVerification) setMetaHelper('msvalidate.01', seo.bingVerification);
+        if (seo.robotsDirective) setMetaHelper('robots', seo.robotsDirective);
+        if (seo.author) setMetaHelper('author', seo.author);
+        if (seo.ogTitle) setPropHelper('og:title', seo.ogTitle);
+        if (seo.ogDescription) setPropHelper('og:description', seo.ogDescription);
+        if (seo.ogImage) setPropHelper('og:image', seo.ogImage);
+        if (seo.canonicalUrl) {
+          let canonicalEl = document.querySelector("link[rel='canonical']") as HTMLLinkElement | null;
+          if (canonicalEl) canonicalEl.href = seo.canonicalUrl;
+        }
+        if (seo.structuredDataOrg) {
+          let s = document.querySelector("script[type='application/ld+json']") as HTMLScriptElement | null;
+          if (!s) { s = document.createElement('script'); s.type = 'application/ld+json'; document.head.appendChild(s); }
+          s.textContent = seo.structuredDataOrg;
+        }
+        if (Array.isArray(seo.trendingHashtags) && seo.trendingHashtags.length > 0) {
+          activeTrendingHashtags = [...seo.trendingHashtags];
+          renderGalleryTagPills();
+        }
+      }
+    }, () => {});
 
     // 1. Hero
     const heroRef = doc(db, 'siteConfigs', 'hero');
@@ -709,13 +775,10 @@ async function loadSiteConfigs() {
       handleFirestoreError(err, OperationType.GET, 'siteConfigs/community');
     });
 
-    // 5. Contact Desk Settings
+    // 5. Contact Desk & Social Media Settings
     const contactSettingsRef = doc(db, 'settings', 'contact');
     onSnapshot(contactSettingsRef, (snap) => {
       const setEl = (id: string, text: string) => { const el = document.getElementById(id); if (el) el.textContent = text; };
-      const twitterEl = document.getElementById('footer-social-twitter') as HTMLAnchorElement;
-      const linkedinEl = document.getElementById('footer-social-linkedin') as HTMLAnchorElement;
-      const discordEl = document.getElementById('footer-social-discord') as HTMLAnchorElement;
       const iframe = document.getElementById('contact-page-map') as HTMLIFrameElement;
       const submitBtn = document.getElementById('contact-submit-btn') as HTMLButtonElement;
 
@@ -723,9 +786,6 @@ async function loadSiteConfigs() {
       const defaultEmail = 'support@promptsone.com';
       const defaultAddress = 'Global AI Hub, Silicon Valley, CA';
       const defaultHours = 'Mon - Fri: 9:00 AM - 6:00 PM IST';
-      const defaultTwitter = 'https://x.com/promptsone';
-      const defaultLinkedin = 'https://linkedin.com/company/promptsone';
-      const defaultDiscord = 'https://discord.gg/promptverse';
 
       if (snap.exists()) {
         const data = snap.data();
@@ -734,9 +794,7 @@ async function loadSiteConfigs() {
         setEl('footer-address', data.address || defaultAddress);
         setEl('footer-hours', data.businessHours || defaultHours);
 
-        if (twitterEl) twitterEl.href = data.twitter || defaultTwitter;
-        if (linkedinEl) linkedinEl.href = data.linkedin || defaultLinkedin;
-        if (discordEl) discordEl.href = data.discord || defaultDiscord;
+        renderFooterSocialLinks(data);
 
         setEl('contact-page-phone', data.phone || defaultPhone);
         setEl('contact-page-email', data.email || defaultEmail);
@@ -763,9 +821,7 @@ async function loadSiteConfigs() {
         setEl('footer-email', defaultEmail);
         setEl('footer-address', defaultAddress);
         setEl('footer-hours', defaultHours);
-        if (twitterEl) twitterEl.href = defaultTwitter;
-        if (linkedinEl) linkedinEl.href = defaultLinkedin;
-        if (discordEl) discordEl.href = defaultDiscord;
+        renderFooterSocialLinks({});
         setEl('contact-page-phone', defaultPhone);
         setEl('contact-page-email', defaultEmail);
         setEl('contact-page-address', defaultAddress);
@@ -778,6 +834,41 @@ async function loadSiteConfigs() {
   } catch (err) {
     console.warn('Error loading site configs:', err);
   }
+}
+
+function renderFooterSocialLinks(data: any) {
+  const container = document.getElementById('footer-social-links-container');
+  if (!container) return;
+
+  const platforms = [
+    { key: 'instagram', label: 'Instagram', icon: 'instagram', color: 'hover:bg-[#E1306C]', defaultUrl: 'https://instagram.com/promptsone' },
+    { key: 'facebook', label: 'Facebook', icon: 'facebook', color: 'hover:bg-[#1877F2]', defaultUrl: 'https://facebook.com/promptsone' },
+    { key: 'youtube', label: 'YouTube', icon: 'youtube', color: 'hover:bg-[#FF0000]', defaultUrl: 'https://youtube.com/@promptsone' },
+    { key: 'twitter', label: 'Twitter/X', icon: 'twitter', color: 'hover:bg-slate-950', defaultUrl: 'https://x.com/promptsone' },
+    { key: 'linkedin', label: 'LinkedIn', icon: 'linkedin', color: 'hover:bg-[#0A66C2]', defaultUrl: 'https://linkedin.com/company/promptsone' },
+    { key: 'whatsapp', label: 'WhatsApp', icon: 'message-circle', color: 'hover:bg-[#25D366]', defaultUrl: 'https://wa.me/15550199' },
+    { key: 'telegram', label: 'Telegram', icon: 'send', color: 'hover:bg-[#229ED9]', defaultUrl: 'https://t.me/promptsone' },
+    { key: 'discord', label: 'Discord', icon: 'message-square', color: 'hover:bg-[#5865F2]', defaultUrl: 'https://discord.gg/promptverse' },
+    { key: 'github', label: 'GitHub', icon: 'github', color: 'hover:bg-[#333333]', defaultUrl: 'https://github.com/promptsone' },
+    { key: 'pinterest', label: 'Pinterest', icon: 'pin', color: 'hover:bg-[#E60023]', defaultUrl: 'https://pinterest.com/promptsone' },
+  ];
+
+  let html = '';
+  platforms.forEach(p => {
+    const url = (data && data[p.key]) ? data[p.key].trim() : p.defaultUrl;
+    if (url) {
+      html += `
+        <a href="${url}" target="_blank" rel="noopener noreferrer" 
+           class="p-2 bg-slate-800 ${p.color} hover:text-white rounded-xl text-slate-400 transition flex items-center justify-center shadow-xs" 
+           aria-label="${p.label}" title="${p.label}">
+          <i data-lucide="${p.icon}" class="w-4 h-4"></i>
+        </a>
+      `;
+    }
+  });
+
+  container.innerHTML = html;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // Live listener for AI Tools collection
@@ -2275,6 +2366,23 @@ function renderAll() {
   renderCollections();
   populateFormCategoryOptions();
   loadBlogs();
+  renderGalleryTagPills();
+}
+
+function renderGalleryTagPills() {
+  const container = document.getElementById('gallery-tag-pills');
+  if (!container) return;
+  container.innerHTML = `
+    <span class="text-[11px] font-bold text-[#5a7260] shrink-0 flex items-center gap-1 pr-1">
+      <i data-lucide="trending-up" class="w-3.5 h-3.5 text-[#2d8a45]"></i> Trending:
+    </span>
+    ${activeTrendingHashtags.map(tag => `
+      <button onclick="quickSearch('${tag.replace('#', '')}')" class="shrink-0 px-3 py-1 rounded-full bg-white hover:bg-[#e8f5ec] hover:text-[#1a5c2a] hover:border-[#2d8a45]/40 border border-[#dde8df] text-[#5a7260] font-bold text-[11px] transition shadow-xs">
+        ${tag}
+      </button>
+    `).join('')}
+  `;
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 // =============================================================================
@@ -2623,6 +2731,28 @@ async function openPromptDetail(id: string, updateHash = true) {
   if (metaDesc) metaDesc.setAttribute('content', `${p.title}: ${cleanSnippet}`);
   const ogImg = document.querySelector("meta[property='og:image']");
   if (ogImg && p.image) ogImg.setAttribute('content', p.image);
+
+  // Dynamic Prompt Schema.org Structured Data
+  let promptLd = document.getElementById('prompt-dynamic-ld') as HTMLScriptElement | null;
+  if (!promptLd) {
+    promptLd = document.createElement('script');
+    promptLd.id = 'prompt-dynamic-ld';
+    promptLd.type = 'application/ld+json';
+    document.head.appendChild(promptLd);
+  }
+  promptLd.textContent = JSON.stringify({
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    "name": p.title,
+    "description": cleanSnippet,
+    "image": p.image,
+    "author": {
+      "@type": "Person",
+      "name": p.creator
+    },
+    "keywords": [p.tool, p.category, ...(p.tags || [])].join(', '),
+    "url": promptUrl
+  });
 
   // Populate all detail page elements
   const set = (id: string, val: string) => { const el = document.getElementById(id); if (el) el.innerText = val; };
@@ -3734,6 +3864,7 @@ function attachWindowGlobalFunctions() {
 
   w.goBackFromPrompt = goBackFromPrompt;
   w.shareOnWhatsApp = shareOnWhatsApp;
+  w.renderGalleryTagPills = renderGalleryTagPills;
 
   w.generateInAITool = () => {
     if (!currentSelectedPrompt) return;

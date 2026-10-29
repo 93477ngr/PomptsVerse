@@ -281,46 +281,6 @@
     <!-- HOME VIEW (DEFAULT) -->
     <div id="view-home" class="view-panel">
       
-      <!-- HERO BANNER SECTION (Green & Yellow Clean Light Palette) -->
-      <section class="py-8 sm:py-12 px-4 sm:px-6 lg:px-8 border-b border-[#dde8df] relative overflow-hidden" style="background: linear-gradient(135deg, #e8f5ec 0%, #fff9e6 100%);">
-        <div class="max-w-[1536px] mx-auto flex flex-col md:flex-row items-center justify-between gap-8 relative z-10">
-          <div class="space-y-4 max-w-2xl text-center md:text-left">
-            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-white/80 border border-[#dde8df] shadow-sm text-xs font-bold text-[#1a5c2a]">
-              <span class="w-2 h-2 rounded-full bg-[#2d8a45] animate-pulse"></span>
-              <span>The World's AI Prompt Search Engine</span>
-              <span class="px-2 py-0.5 rounded-md bg-[#fff9e6] text-[#1a5c2a] border border-[#f5c518]/30 font-black text-[10px]">v2.5</span>
-            </div>
-            <h1 class="text-3xl sm:text-5xl font-extrabold text-[#1a2e1e] tracking-tight leading-[1.15]">
-              Discover, Test & Copy <span class="text-[#2d8a45]">Engineered AI Prompts</span>
-            </h1>
-            <p class="text-sm sm:text-base text-[#5a7260] font-medium leading-relaxed">
-              Curated master prompts for ChatGPT, Midjourney, Flux, Gemini, Leonardo and Claude with zero fluff. Direct one-click copy and instant generation.
-            </p>
-            <div class="flex items-center justify-center md:justify-start gap-3 pt-2">
-              <button onclick="navigateTo('search')" class="btn by px-5 py-2.5 shadow-md text-xs sm:text-sm">
-                <i data-lucide="compass" class="w-4 h-4"></i> Explore Prompts
-              </button>
-              <button onclick="navigateTo('dashboard')" class="btn byy px-5 py-2.5 shadow-sm text-xs sm:text-sm">
-                <i data-lucide="plus-circle" class="w-4 h-4 text-[#1a5c2a]"></i> Submit Prompt
-              </button>
-            </div>
-          </div>
-          <div class="hidden md:flex items-center gap-3">
-            <div class="p-4 rounded-2xl bg-white border border-[#dde8df] shadow-sm text-center min-w-[110px]">
-              <div class="text-2xl font-extrabold text-[#2d8a45]">50,000+</div>
-              <div class="text-[10px] font-bold uppercase tracking-wider text-[#5a7260]">Daily Prompts</div>
-            </div>
-            <div class="p-4 rounded-2xl bg-white border border-[#dde8df] shadow-sm text-center min-w-[110px]">
-              <div class="text-2xl font-extrabold text-[#1a5c2a]">100%</div>
-              <div class="text-[10px] font-bold uppercase tracking-wider text-[#5a7260]">Human Verified</div>
-            </div>
-            <div class="p-4 rounded-2xl bg-[#fff9e6] border border-[#f5c518]/40 shadow-sm text-center min-w-[110px]">
-              <div class="text-2xl font-extrabold text-[#1a5c2a] flex items-center justify-center gap-1"><i data-lucide="star" class="w-5 h-5 fill-[#f5c518] text-[#f5c518]"></i> 4.9</div>
-              <div class="text-[10px] font-bold uppercase tracking-wider text-[#5a7260]">Rating</div>
-            </div>
-          </div>
-        </div>
-      </section>
 
       <!-- CATEGORY PILLS ROW SECTION -->
       <section id="categories-section" class="py-5 border-b border-slate-200/80 bg-white">
@@ -1173,16 +1133,8 @@
           <p id="footer-tagline" class="text-xs text-slate-400 leading-relaxed">
             Discover, search, bookmark and copy premium engineered prompts for ChatGPT, Midjourney, Flux, Gemini, Claude, and more.
           </p>
-          <div class="flex items-center gap-3">
-            <a id="footer-social-twitter" href="https://x.com/promptsone" target="_blank" rel="noopener noreferrer" class="p-2 bg-slate-800 hover:bg-blue-500 hover:text-white rounded-lg text-slate-400 transition" aria-label="Twitter">
-              <i data-lucide="twitter" class="w-4 h-4"></i>
-            </a>
-            <a id="footer-social-linkedin" href="https://linkedin.com/company/promptsone" target="_blank" rel="noopener noreferrer" class="p-2 bg-slate-800 hover:bg-blue-600 hover:text-white rounded-lg text-slate-400 transition" aria-label="LinkedIn">
-              <i data-lucide="linkedin" class="w-4 h-4"></i>
-            </a>
-            <a id="footer-social-discord" href="https://discord.gg/promptverse" target="_blank" rel="noopener noreferrer" class="p-2 bg-slate-800 hover:bg-indigo-600 hover:text-white rounded-lg text-slate-400 transition" aria-label="Discord">
-              <i data-lucide="message-square" class="w-4 h-4"></i>
-            </a>
+          <div id="footer-social-links-container" class="flex flex-wrap items-center gap-2 pt-1">
+            <!-- Dynamic social icons rendered by app.ts -->
           </div>
         </div>
 
@@ -1208,7 +1160,6 @@
             <li><button onclick="navigateTo('about')" class="hover:text-white transition">About Us</button></li>
             <li><button onclick="navigateTo('privacy')" class="hover:text-white transition">Privacy Policy</button></li>
             <li><button onclick="navigateTo('terms')" class="hover:text-white transition">Terms of Service</button></li>
-            <li><a href="/admin.html" target="_blank" class="hover:text-purple-400 transition flex items-center gap-1.5 text-purple-400 font-semibold"><i data-lucide="shield" class="w-3.5 h-3.5"></i> Admin Control Panel</a></li>
           </ul>
         </div>
 

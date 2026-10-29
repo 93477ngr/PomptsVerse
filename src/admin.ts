@@ -464,6 +464,7 @@ function adminNav(section: string) {
     media: ['Media Library', 'Browse uploaded images and assets'],
     advertisements: ['Sponsored Advertisements', 'Create, schedule, prioritize and analyze sponsored campaigns'],
     'adsense-settings': ['Google AdSense Integration', 'Configure Google AdSense publisher ID, Auto Ads, and slot mappings'],
+    seo: ['SEO & Google Ranking', 'Search engine optimization, meta tags, Google ranking keywords & hashtags'],
   };
 
   const [title, subtitle] = sectionNames[section] || ['Admin', 'Dashboard'];
@@ -497,6 +498,7 @@ function renderSection(section: string) {
     case 'reports': renderReports(); break;
     case 'stats': renderStatsManagement(); break;
     case 'settings': renderSettings(); break;
+    case 'seo': renderSEO(); break;
     case 'advertisements': renderAdvertisements(); break;
     case 'adsense-settings': renderAdSenseSettings(); break;
     case 'backup': renderBackup(); break;
@@ -2836,7 +2838,7 @@ function toggleAdminSidebar() {
 }
 
 // =============================================================================
-// CMS MODULES: BLOG MANAGEMENT (CRUD)
+// CMS MODULES: BLOG MANAGEMENT (CRUD & RICH CMS SUITE)
 // =============================================================================
 
 let activeBlogsList: any[] = [];
@@ -2844,40 +2846,49 @@ let activeBlogsList: any[] = [];
 async function renderBlogs() {
   setContent('admin-content', `
     <div class="space-y-6">
-      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center justify-between">
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex items-center justify-between flex-wrap gap-3">
         <div>
-          <h3 class="text-sm font-bold text-slate-900">AI Blog Articles</h3>
-          <p class="text-[10px] text-slate-400">Compose, schedule, draft, and publish tutorials and announcements</p>
+          <h3 class="text-sm font-bold text-slate-900 flex items-center gap-2">
+            <i data-lucide="newspaper" class="w-4 h-4 text-blue-600"></i> AI Blog Articles & Content CMS
+          </h3>
+          <p class="text-[10px] text-slate-400 mt-0.5">Compose, schedule, draft, and publish tutorials, news, and prompt engineering guides</p>
         </div>
-        <button onclick="openBlogComposer()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition flex items-center gap-1.5">
-          <i data-lucide="plus" class="w-4 h-4"></i> Write Article
-        </button>
+        <div class="flex items-center gap-2">
+          <button onclick="seedDefaultBlogs()" class="px-3 py-2 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-xl border border-emerald-200 transition flex items-center gap-1.5" title="Generate sample AI tutorial articles">
+            <i data-lucide="wand-2" class="w-3.5 h-3.5"></i> Seed Articles
+          </button>
+          <button onclick="openBlogComposer()" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl shadow-sm transition flex items-center gap-1.5">
+            <i data-lucide="plus" class="w-4 h-4"></i> Write Article
+          </button>
+        </div>
       </div>
 
       <!-- Composer Form (Hidden by default) -->
       <div id="blog-composer-card" class="hidden bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-        <h4 id="blog-composer-title" class="text-xs font-bold text-slate-950 uppercase tracking-wider">Compose New Post</h4>
+        <h4 id="blog-composer-title" class="text-xs font-bold text-slate-950 uppercase tracking-wider flex items-center gap-2">
+          <i data-lucide="pen-tool" class="w-4 h-4 text-blue-600"></i> Compose New Post
+        </h4>
         <form onsubmit="saveBlogPost(event)" class="space-y-4 text-xs font-medium">
           <input type="hidden" id="blog-form-id" value="" />
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label class="block text-[11px] font-bold text-slate-700 mb-1">Post Title *</label>
-              <input type="text" id="blog-title" required oninput="autoSlugify(this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-xl" placeholder="e.g. 10 Tips for Flux AI" />
+              <input type="text" id="blog-title" required oninput="autoSlugify(this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-blue-500 transition" placeholder="e.g. 10 Tips for Flux AI Prompting" />
             </div>
             <div>
               <label class="block text-[11px] font-bold text-slate-700 mb-1">Slug (URL Path) *</label>
-              <input type="text" id="blog-slug" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" placeholder="e.g. 10-tips-for-flux-ai" />
+              <input type="text" id="blog-slug" required class="w-full px-3 py-2 border border-slate-200 rounded-xl focus:border-blue-500 transition font-mono" placeholder="e.g. 10-tips-for-flux-ai" />
             </div>
           </div>
           
           <div class="grid grid-cols-1 sm:grid-cols-4 gap-4">
             <div>
               <label class="block text-[11px] font-bold text-slate-700 mb-1">Author Name *</label>
-              <input type="text" id="blog-author" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" placeholder="e.g. Admin Rajesh" />
+              <input type="text" id="blog-author" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" placeholder="e.g. PromptVerse Editorial" />
             </div>
             <div>
               <label class="block text-[11px] font-bold text-slate-700 mb-1">Category *</label>
-              <input type="text" id="blog-category" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" placeholder="e.g. Tutorials" />
+              <input type="text" id="blog-category" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" placeholder="e.g. Tutorials, Cheatsheet, Guides" />
             </div>
             <div>
               <label class="block text-[11px] font-bold text-slate-700 mb-1">Reading Time *</label>
@@ -2885,9 +2896,9 @@ async function renderBlogs() {
             </div>
             <div>
               <label class="block text-[11px] font-bold text-slate-700 mb-1">Status *</label>
-              <select id="blog-status" onchange="toggleScheduleInput(this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-xl">
-                <option value="draft">Draft</option>
+              <select id="blog-status" onchange="toggleScheduleInput(this.value)" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-bold">
                 <option value="published">Published</option>
+                <option value="draft">Draft</option>
                 <option value="scheduled">Scheduled</option>
               </select>
             </div>
@@ -2895,18 +2906,24 @@ async function renderBlogs() {
 
           <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
-              <label class="block text-[11px] font-bold text-slate-700 mb-1">Featured Image (URL or Base64)</label>
-              <input type="text" id="blog-image" class="w-full px-3 py-2 border border-slate-200 rounded-xl" placeholder="Paste image URL, Unsplash URL, or Base64 string..." />
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Featured Cover Image URL</label>
+              <div class="flex gap-2">
+                <input type="text" id="blog-image" class="flex-1 px-3 py-2 border border-slate-200 rounded-xl font-mono text-xs" placeholder="Paste image URL or upload below..." />
+                <input type="file" id="blog-img-file-input" accept="image/*" class="hidden" onchange="uploadBlogCoverImage(this)" />
+                <button type="button" id="upload-blog-img-btn" onclick="document.getElementById('blog-img-file-input').click()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold rounded-xl transition flex items-center gap-1 shrink-0">
+                  <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload CDN
+                </button>
+              </div>
             </div>
             <div id="blog-schedule-container" class="hidden">
-              <label class="block text-[11px] font-bold text-slate-700 mb-1">Publish/Schedule Date *</label>
+              <label class="block text-[11px] font-bold text-slate-700 mb-1">Publish / Schedule Date *</label>
               <input type="datetime-local" id="blog-schedule-date" class="w-full px-3 py-2 border border-slate-200 rounded-xl" />
             </div>
           </div>
 
           <!-- SEO Metadata Fields Section -->
           <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-            <h5 class="text-xs font-bold text-slate-800 flex items-center gap-1.5"><i data-lucide="search" class="w-4 h-4 text-blue-500"></i> SEO Metadata Fields (Optional)</h5>
+            <h5 class="text-xs font-bold text-slate-800 flex items-center gap-1.5"><i data-lucide="search" class="w-4 h-4 text-blue-500"></i> SEO & Google Search Snippet Optimization</h5>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>
                 <label class="block text-[10px] font-bold text-slate-600 mb-1">SEO Meta Title</label>
@@ -2924,31 +2941,47 @@ async function renderBlogs() {
           </div>
 
           <div>
-            <label class="block text-[11px] font-bold text-slate-700 mb-1">Summary *</label>
-            <input type="text" id="blog-summary" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" placeholder="Quick catchphrase summary of this blog post..." />
+            <label class="block text-[11px] font-bold text-slate-700 mb-1">Article Summary *</label>
+            <input type="text" id="blog-summary" required class="w-full px-3 py-2 border border-slate-200 rounded-xl" placeholder="Quick 1-2 sentence catchphrase summary of this blog post..." />
           </div>
+
           <div>
-            <label class="block text-[11px] font-bold text-slate-700 mb-1">Content (HTML / Rich Text) *</label>
-            <textarea id="blog-content" required rows="10" class="w-full px-3 py-2 border border-slate-200 rounded-xl font-mono" placeholder="Write your post content in HTML or plain text..."></textarea>
+            <div class="flex items-center justify-between mb-1.5 flex-wrap gap-2">
+              <label class="block text-[11px] font-bold text-slate-700">Article Content (HTML / Rich Formatting) *</label>
+              <!-- Formatting Toolbar Buttons -->
+              <div class="flex items-center gap-1 flex-wrap bg-slate-100 p-1 rounded-xl border border-slate-200">
+                <button type="button" onclick="insertBlogFormattingTag('<b>', '</b>')" class="px-2 py-1 bg-white rounded font-bold text-[10px] text-slate-700 hover:bg-slate-200" title="Bold"><b>B</b></button>
+                <button type="button" onclick="insertBlogFormattingTag('<i>', '</i>')" class="px-2 py-1 bg-white rounded italic text-[10px] text-slate-700 hover:bg-slate-200" title="Italic"><i>I</i></button>
+                <button type="button" onclick="insertBlogFormattingTag('<h3>', '</h3>')" class="px-2 py-1 bg-white rounded font-bold text-[10px] text-slate-700 hover:bg-slate-200" title="Heading 3">H3</button>
+                <button type="button" onclick="insertBlogFormattingTag('<h4>', '</h4>')" class="px-2 py-1 bg-white rounded font-bold text-[10px] text-slate-700 hover:bg-slate-200" title="Heading 4">H4</button>
+                <button type="button" onclick="insertBlogFormattingTag('<a href=\'#\'>', '</a>')" class="px-2 py-1 bg-white rounded text-[10px] text-slate-700 hover:bg-slate-200" title="Link">Link</button>
+                <button type="button" onclick="insertBlogFormattingTag('<img src=\'', '\' alt=\'\' class=\'w-full rounded-2xl my-4\' />')" class="px-2 py-1 bg-white rounded text-[10px] text-slate-700 hover:bg-slate-200" title="Image Tag">Img</button>
+                <button type="button" onclick="insertBlogFormattingTag('<ul>\n  <li>', '</li>\n</ul>')" class="px-2 py-1 bg-white rounded text-[10px] text-slate-700 hover:bg-slate-200" title="Bullet List">&bull; List</button>
+                <button type="button" onclick="insertBlogFormattingTag('<blockquote>', '</blockquote>')" class="px-2 py-1 bg-white rounded text-[10px] text-slate-700 hover:bg-slate-200" title="Quote">Quote</button>
+                <button type="button" onclick="insertBlogFormattingTag('<pre><code>', '</code></pre>')" class="px-2 py-1 bg-white rounded font-mono text-[10px] text-slate-700 hover:bg-slate-200" title="Code Block">Code</button>
+                <button type="button" onclick="insertBlogFormattingTag('<p>', '</p>')" class="px-2 py-1 bg-white rounded text-[10px] text-slate-700 hover:bg-slate-200" title="Paragraph">Para</button>
+              </div>
+            </div>
+            <textarea id="blog-content" required rows="12" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl font-mono text-xs focus:border-blue-500 transition leading-relaxed" placeholder="Write your article content using HTML formatting or plain text..."></textarea>
           </div>
           
-          <div class="flex justify-end gap-2">
-            <button type="button" onclick="previewBlogPost()" class="px-4 py-2 bg-amber-500 text-white font-bold rounded-xl hover:bg-amber-600 transition flex items-center gap-1"><i data-lucide="eye" class="w-4 h-4"></i> Live Preview</button>
-            <button type="button" onclick="$('blog-composer-card').classList.add('hidden')" class="px-4 py-2 border rounded-xl">Cancel</button>
-            <button type="submit" class="px-4 py-2 bg-blue-600 text-white font-bold rounded-xl hover:bg-blue-700 transition">Save Article</button>
+          <div class="flex justify-end gap-2 pt-2 border-t border-slate-100">
+            <button type="button" onclick="previewBlogPost()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white font-bold rounded-xl transition flex items-center gap-1.5"><i data-lucide="eye" class="w-4 h-4"></i> Live Preview</button>
+            <button type="button" onclick="$('blog-composer-card').classList.add('hidden')" class="px-4 py-2 border border-slate-200 hover:bg-slate-50 rounded-xl font-semibold">Cancel</button>
+            <button type="submit" class="px-5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-xl shadow-sm transition flex items-center gap-1.5"><i data-lucide="save" class="w-4 h-4"></i> Save Article</button>
           </div>
         </form>
       </div>
 
       <!-- Blog Live Preview Container (Hidden by default) -->
       <div id="blog-preview-container" class="hidden bg-slate-100 rounded-3xl border border-slate-200 p-6 space-y-4">
-        <div class="flex items-center justify-between border-b pb-2">
-          <h4 class="text-xs font-bold text-slate-800 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="eye" class="w-4 h-4 text-amber-500"></i> Blog Preview</h4>
+        <div class="flex items-center justify-between border-b border-slate-200 pb-2">
+          <h4 class="text-xs font-bold text-slate-800 uppercase tracking-widest flex items-center gap-1.5"><i data-lucide="eye" class="w-4 h-4 text-amber-500"></i> Article Live Preview</h4>
           <button onclick="closeBlogPreview()" class="text-xs text-rose-600 font-bold hover:underline">Close Preview</button>
         </div>
         <article class="bg-white rounded-2xl p-6 border border-slate-200 space-y-4 shadow-sm max-w-3xl mx-auto">
-          <span id="preview-blog-cat" class="px-2 py-0.5 rounded bg-blue-50 text-blue-600 text-[10px] font-bold uppercase">Tutorial</span>
-          <h1 id="preview-blog-title" class="text-2xl font-extrabold text-slate-900">Post Title</h1>
+          <span id="preview-blog-cat" class="px-2.5 py-1 rounded bg-blue-50 text-blue-600 text-[10px] font-bold uppercase">Tutorial</span>
+          <h1 id="preview-blog-title" class="text-2xl font-extrabold text-slate-900 leading-tight">Post Title</h1>
           <div class="flex items-center gap-3 text-[11px] text-slate-400 font-bold">
             <span id="preview-blog-author">By Admin</span>
             <span>&middot;</span>
@@ -2956,14 +2989,26 @@ async function renderBlogs() {
             <span>&middot;</span>
             <span id="preview-blog-date">Date</span>
           </div>
-          <div id="preview-blog-body" class="prose prose-slate text-xs sm:text-sm text-slate-700 leading-relaxed border-t pt-4"></div>
+          <div id="preview-blog-body" class="prose prose-slate text-xs sm:text-sm text-slate-700 leading-relaxed border-t border-slate-100 pt-4"></div>
         </article>
       </div>
 
+      <!-- Articles Table with Search & Filter Header -->
       <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="p-4 border-b border-slate-100 flex items-center justify-between">
-          <span class="text-xs font-bold text-slate-800">Published & Draft Posts</span>
-          <span id="blogs-count-badge" class="text-[10px] bg-slate-100 px-2 py-0.5 rounded-full font-bold">0 posts</span>
+        <div class="p-4 border-b border-slate-100 flex items-center justify-between flex-wrap gap-3">
+          <div class="flex items-center gap-2">
+            <span class="text-xs font-bold text-slate-800">Published & Draft Posts</span>
+            <span id="blogs-count-badge" class="text-[10px] bg-slate-100 text-slate-600 px-2.5 py-0.5 rounded-full font-bold">0 posts</span>
+          </div>
+          <div class="flex items-center gap-2">
+            <input type="text" id="blog-search" placeholder="Search title or category..." oninput="filterBlogsTable()" class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs focus:border-blue-500 transition w-48 sm:w-64" />
+            <select id="blog-status-filter" onchange="filterBlogsTable()" class="px-3 py-1.5 border border-slate-200 rounded-xl text-xs font-bold focus:border-blue-500 transition">
+              <option value="all">All Statuses</option>
+              <option value="published">Published</option>
+              <option value="draft">Drafts</option>
+              <option value="scheduled">Scheduled</option>
+            </select>
+          </div>
         </div>
         <div class="overflow-x-auto w-full">
           <table class="w-full text-xs min-w-[700px]">
@@ -2993,49 +3038,164 @@ async function renderBlogs() {
     activeBlogsList = snap.docs.map(d => ({ id: d.id, ...(d.data() as any) }));
     
     $('blogs-count-badge')!.textContent = `${activeBlogsList.length} articles`;
-    
-    const tbody = $('blogs-tbody');
-    if (!tbody) return;
-    if (activeBlogsList.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs">No articles created yet. Get writing!</td></tr>`;
-      return;
-    }
-    
-    tbody.innerHTML = activeBlogsList.map(b => {
-      let imgTag = '<div class="w-10 h-10 bg-slate-100 rounded-lg border border-slate-200 shrink-0 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-slate-400"></i></div>';
-      if (b.featuredImage) {
-        imgTag = `<img src="${b.featuredImage}" class="w-10 h-10 rounded-lg object-cover border border-slate-100 shrink-0 shadow-sm" onerror="this.parentElement.innerHTML='<div class=\\'w-10 h-10 bg-slate-100 rounded-lg border border-slate-200 shrink-0 flex items-center justify-center\\'><i data-lucide=\\'image\\' class=\\'w-4 h-4 text-slate-400\\'></i></div>'" />`;
-      }
-      const scheduleText = b.status === 'scheduled' && b.publishDate 
-        ? `<div class="text-[9px] text-indigo-500 font-semibold mt-0.5">Sched: ${formatDate(b.publishDate)}</div>` 
-        : '';
-      return `
-        <tr class="hover:bg-slate-50/50 transition">
-          <td class="p-3 w-14 shrink-0">${imgTag}</td>
-          <td class="p-3">
-            <div class="font-bold text-slate-900 max-w-[220px] truncate" title="${b.title}">${b.title}</div>
-            <div class="text-[9px] text-slate-400 font-medium">By ${b.author || 'Admin'} &middot; ${b.readingTime || '3 min read'}</div>
-          </td>
-          <td class="p-3 font-semibold text-slate-600 whitespace-nowrap">${b.category || 'Tutorial'}</td>
-          <td class="p-3 font-mono text-slate-500 max-w-[150px] truncate" title="${b.slug}">${b.slug}</td>
-          <td class="p-3 whitespace-nowrap">
-            <span class="px-2 py-0.5 rounded text-[10px] font-bold ${b.status === 'published' ? 'bg-emerald-50 text-emerald-700' : b.status === 'scheduled' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-600'}">
-              ${b.status || 'draft'}
-            </span>
-            ${scheduleText}
-          </td>
-          <td class="p-3 text-slate-400 whitespace-nowrap">${formatDate(b.timestamp)}</td>
-          <td class="p-3 text-right space-x-0.5 whitespace-nowrap">
-            <button onclick="editBlogPost('${b.id}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded" title="Edit Post"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
-            <button onclick="deleteBlogPostConfirm('${b.id}')" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded" title="Delete Post"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
-          </td>
-        </tr>
-      `;
-    }).join('');
-    lcIcons();
+    renderBlogsTableRows(activeBlogsList);
   } catch (err) {
-    $('blogs-tbody')!.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-rose-500">Failed to load articles.</td></tr>`;
+    $('blogs-tbody')!.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-rose-500 font-semibold">Failed to load articles from database.</td></tr>`;
   }
+}
+
+function renderBlogsTableRows(list: any[]) {
+  const tbody = $('blogs-tbody');
+  if (!tbody) return;
+  if (list.length === 0) {
+    tbody.innerHTML = `<tr><td colspan="7" class="p-8 text-center text-slate-400 text-xs">No articles found matching criteria.</td></tr>`;
+    return;
+  }
+  
+  tbody.innerHTML = list.map(b => {
+    let imgTag = '<div class="w-10 h-10 bg-slate-100 rounded-lg border border-slate-200 shrink-0 flex items-center justify-center"><i data-lucide="image" class="w-4 h-4 text-slate-400"></i></div>';
+    if (b.featuredImage) {
+      imgTag = `<img src="${b.featuredImage}" class="w-10 h-10 rounded-lg object-cover border border-slate-100 shrink-0 shadow-sm" onerror="this.parentElement.innerHTML='<div class=\\'w-10 h-10 bg-slate-100 rounded-lg border border-slate-200 shrink-0 flex items-center justify-center\\'><i data-lucide=\\'image\\' class=\\'w-4 h-4 text-slate-400\\'></i></div>'" />`;
+    }
+    const scheduleText = b.status === 'scheduled' && b.publishDate 
+      ? `<div class="text-[9px] text-indigo-500 font-semibold mt-0.5">Sched: ${formatDate(b.publishDate)}</div>` 
+      : '';
+    return `
+      <tr class="hover:bg-slate-50/50 transition">
+        <td class="p-3 w-14 shrink-0">${imgTag}</td>
+        <td class="p-3">
+          <div class="font-bold text-slate-900 max-w-[220px] truncate" title="${b.title}">${b.title}</div>
+          <div class="text-[9px] text-slate-400 font-medium">By ${b.author || 'Admin'} &middot; ${b.readingTime || '3 min read'}</div>
+        </td>
+        <td class="p-3 font-semibold text-slate-600 whitespace-nowrap">${b.category || 'Tutorial'}</td>
+        <td class="p-3 font-mono text-slate-500 max-w-[150px] truncate" title="${b.slug}">${b.slug}</td>
+        <td class="p-3 whitespace-nowrap">
+          <span class="px-2 py-0.5 rounded text-[10px] font-bold ${b.status === 'published' ? 'bg-emerald-50 text-emerald-700' : b.status === 'scheduled' ? 'bg-indigo-50 text-indigo-700' : 'bg-slate-100 text-slate-600'}">
+            ${b.status || 'draft'}
+          </span>
+          ${scheduleText}
+        </td>
+        <td class="p-3 text-slate-400 whitespace-nowrap">${formatDate(b.timestamp)}</td>
+        <td class="p-3 text-right space-x-0.5 whitespace-nowrap">
+          <button onclick="editBlogPost('${b.id}')" class="p-1.5 text-blue-600 hover:bg-blue-50 rounded transition" title="Edit Post"><i data-lucide="edit-3" class="w-4 h-4 inline"></i></button>
+          <button onclick="deleteBlogPostConfirm('${b.id}')" class="p-1.5 text-rose-600 hover:bg-rose-50 rounded transition" title="Delete Post"><i data-lucide="trash-2" class="w-4 h-4 inline"></i></button>
+        </td>
+      </tr>
+    `;
+  }).join('');
+  lcIcons();
+}
+
+function filterBlogsTable() {
+  const search = ($('blog-search') as HTMLInputElement)?.value.toLowerCase() || '';
+  const statusFilter = ($('blog-status-filter') as HTMLSelectElement)?.value || 'all';
+
+  const filtered = activeBlogsList.filter(b => {
+    const matchesSearch = !search ||
+      (b.title || '').toLowerCase().includes(search) ||
+      (b.category || '').toLowerCase().includes(search) ||
+      (b.author || '').toLowerCase().includes(search) ||
+      (b.slug || '').toLowerCase().includes(search);
+    const matchesStatus = statusFilter === 'all' || b.status === statusFilter;
+    return matchesSearch && matchesStatus;
+  });
+
+  renderBlogsTableRows(filtered);
+}
+
+async function uploadBlogCoverImage(input: HTMLInputElement) {
+  if (!input.files?.[0]) return;
+  const file = input.files[0];
+  const btn = $('upload-blog-img-btn') as HTMLButtonElement;
+  if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
+  try {
+    showToast('Uploading cover image to Cloud CDN...', 'info');
+    const url = await uploadToCloudinary(file);
+    const imgInput = $('blog-image') as HTMLInputElement;
+    if (imgInput) imgInput.value = url;
+    showToast('Cover image uploaded to CDN!', 'success');
+  } catch (err: any) {
+    showToast(`Image upload failed: ${err.message}`, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload CDN'; lcIcons(); }
+  }
+}
+
+function insertBlogFormattingTag(prefix: string, suffix: string) {
+  const textarea = $('blog-content') as HTMLTextAreaElement;
+  if (!textarea) return;
+  const start = textarea.selectionStart;
+  const end = textarea.selectionEnd;
+  const val = textarea.value;
+  const selectedText = val.substring(start, end) || 'text';
+  const replacement = prefix + selectedText + suffix;
+  textarea.value = val.substring(0, start) + replacement + val.substring(end);
+  textarea.focus();
+  textarea.setSelectionRange(start + prefix.length, start + prefix.length + selectedText.length);
+}
+
+async function seedDefaultBlogs() {
+  showConfirm('Seed Sample Articles', 'This will add 3 professional AI prompt engineering tutorial articles to your blog collection. Continue?', async () => {
+    try {
+      showToast('Seeding sample blog articles...', 'info');
+      const seedArticles = [
+        {
+          title: "Mastering Flux AI Prompting: The Ultimate 2026 Guide",
+          slug: "mastering-flux-ai-prompting-guide",
+          author: "PromptVerse Editorial",
+          category: "Tutorials",
+          readingTime: "6 min read",
+          status: "published",
+          featuredImage: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80",
+          summary: "Learn how to craft ultra-realistic photo prompts using Flux.1 Schnell and Flux Pro parameters.",
+          contentHTML: `<h3>Introduction to Flux AI Architecture</h3><p>Flux.1 has redefined text-to-image synthesis with unmatched typography compliance and photorealistic lighting texture fidelity. In this tutorial, we analyze exact prompt structure for Flux models.</p><h4>1. Prompt Keyword Hierarchy</h4><p>When composing a Flux prompt, place lighting and camera settings at the beginning:</p><pre><code>A hyperrealistic 35mm film photograph of an elderly artisan in a sunlit wooden workshop, shot on Leica M11, soft warm golden hour light, shallow depth of field --ar 16:9</code></pre><h4>2. Negative Prompts and Clarity</h4><p>Unlike legacy SDXL models, Flux works best with descriptive direct statements rather than long negative prompt lists.</p>`,
+          seoTitle: "Mastering Flux AI Prompting Guide | PromptVerse",
+          seoDesc: "Complete 2026 guide to prompt engineering for Flux.1 AI image generation models.",
+          seoKeywords: "Flux AI, prompt engineering, Midjourney, AI tutorials",
+          timestamp: serverTimestamp()
+        },
+        {
+          title: "ChatGPT System Prompts Masterclass: Persona & Formatting Control",
+          slug: "chatgpt-system-prompts-masterclass",
+          author: "Rajesh Kumar",
+          category: "Guides",
+          readingTime: "8 min read",
+          status: "published",
+          featuredImage: "https://images.unsplash.com/photo-1677442136019-21780ecad995?auto=format&fit=crop&w=800&q=80",
+          summary: "Discover advanced techniques for framing LLM system prompts for coding, content writing, and data extraction.",
+          contentHTML: `<h3>The Power of System Instructions</h3><p>System prompts establish the core identity, boundaries, and formatting output constraints for ChatGPT and Gemini models before any user message is evaluated.</p><h4>Formatting Markdown Output</h4><p>Enforce clean JSON or Structured Markdown by specifying output schema directly in the preamble:</p><blockquote>Always structure responses with clear H3 headers, key bullet points, and code blocks with syntax highlighting.</blockquote>`,
+          seoTitle: "ChatGPT System Prompts Masterclass | PromptVerse",
+          seoDesc: "Learn how to write high-converting system prompts for ChatGPT and LLM agents.",
+          seoKeywords: "ChatGPT, system prompt, LLM prompt engineering",
+          timestamp: serverTimestamp()
+        },
+        {
+          title: "Midjourney v6.1 Parameter Cheatsheet: Aspect Ratios, Chaos & Stylize",
+          slug: "midjourney-v61-parameter-cheatsheet",
+          author: "PromptVerse Team",
+          category: "Cheatsheet",
+          readingTime: "4 min read",
+          status: "published",
+          featuredImage: "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?auto=format&fit=crop&w=800&q=80",
+          summary: "A concise reference guide to all Midjourney v6.1 command parameters and aspect ratio hacks.",
+          contentHTML: `<h3>Midjourney v6.1 Essential Flags</h3><ul><li><b>--ar 16:9</b> - Cinematic widescreen orientation</li><li><b>--stylize 250</b> - Enhances artistic rendering and detail richness</li><li><b>--chaos 15</b> - Introduces initial variance across 4 grid images</li><li><b>--v 6.1</b> - Enforces latest lighting and text rendering engine</li></ul>`,
+          seoTitle: "Midjourney v6.1 Parameter Cheatsheet | PromptVerse",
+          seoDesc: "Quick reference guide for Midjourney v6.1 parameters: aspect ratios, stylize, chaos, and tile.",
+          seoKeywords: "Midjourney v6.1, AI parameters, prompt cheatsheet",
+          timestamp: serverTimestamp()
+        }
+      ];
+
+      for (const art of seedArticles) {
+        await addDoc(collection(db, 'blogs'), art);
+      }
+      showToast('3 sample articles created!', 'success');
+      logAdminAction('blog_seed_articles', 'blogs');
+      renderBlogs();
+    } catch (err: any) {
+      showToast(`Failed to seed articles: ${err.message}`, 'error');
+    }
+  });
 }
 
 function autoSlugify(val: string) {
@@ -3088,16 +3248,16 @@ function openBlogComposer() {
   ( $('blog-title') as HTMLInputElement).value = '';
   ( $('blog-slug') as HTMLInputElement).value = '';
   ( $('blog-author') as HTMLInputElement).value = currentAdminUser?.displayName || 'PromptVerse Admin';
-  ( $('blog-category') as HTMLInputElement).value = 'Tutorial';
+  ( $('blog-category') as HTMLInputElement).value = 'Tutorials';
   ( $('blog-reading-time') as HTMLInputElement).value = '5 min read';
   ( $('blog-image') as HTMLInputElement).value = '';
-  ( $('blog-status') as HTMLSelectElement).value = 'draft';
+  ( $('blog-status') as HTMLSelectElement).value = 'published';
   ( $('blog-summary') as HTMLInputElement).value = '';
   ( $('blog-content') as HTMLTextAreaElement).value = '';
   ( $('blog-seo-title') as HTMLInputElement).value = '';
   ( $('blog-seo-desc') as HTMLInputElement).value = '';
   ( $('blog-seo-keywords') as HTMLInputElement).value = '';
-  toggleScheduleInput('draft');
+  toggleScheduleInput('published');
 }
 
 function editBlogPost(id: string) {
@@ -3113,7 +3273,7 @@ function editBlogPost(id: string) {
   ( $('blog-category') as HTMLInputElement).value = b.category || '';
   ( $('blog-reading-time') as HTMLInputElement).value = b.readingTime || '5 min read';
   ( $('blog-image') as HTMLInputElement).value = b.featuredImage || '';
-  ( $('blog-status') as HTMLSelectElement).value = b.status || 'draft';
+  ( $('blog-status') as HTMLSelectElement).value = b.status || 'published';
   ( $('blog-summary') as HTMLInputElement).value = b.summary || '';
   ( $('blog-content') as HTMLTextAreaElement).value = b.contentHTML || '';
   ( $('blog-seo-title') as HTMLInputElement).value = b.seoTitle || '';
@@ -3122,7 +3282,6 @@ function editBlogPost(id: string) {
   
   toggleScheduleInput(b.status);
   if (b.status === 'scheduled' && b.publishDate) {
-    // Format timestamp back to local datetime-local format
     const d = b.publishDate.seconds ? new Date(b.publishDate.seconds * 1000) : new Date(b.publishDate);
     const tzoffset = d.getTimezoneOffset() * 60000;
     const localISOTime = (new Date(d.getTime() - tzoffset)).toISOString().slice(0, 16);
@@ -3454,19 +3613,49 @@ async function renderContactSettings() {
           </div>
 
           <div class="p-4 bg-slate-50 rounded-2xl border border-slate-200 space-y-3">
-            <h5 class="text-xs font-bold text-slate-800 flex items-center gap-1.5"><i data-lucide="share-2" class="w-4 h-4 text-blue-500"></i> Social Media Links</h5>
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <h5 class="text-xs font-bold text-slate-800 flex items-center gap-1.5"><i data-lucide="share-2" class="w-4 h-4 text-blue-500"></i> Social Media Platforms &amp; Links</h5>
+            <p class="text-[10px] text-slate-400">Links configured here will automatically render brand icons in the website footer and contact desk.</p>
+            
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
               <div>
-                <label class="block text-[10px] font-bold text-slate-600 mb-1">Twitter/X Link</label>
-                <input type="text" id="setting-twitter" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="https://twitter.com/username" />
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">Instagram Link</label>
+                <input type="text" id="setting-instagram" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="https://instagram.com/yourhandle" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">Facebook Link</label>
+                <input type="text" id="setting-facebook" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="https://facebook.com/yourpage" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">YouTube Channel</label>
+                <input type="text" id="setting-youtube" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="https://youtube.com/@yourchannel" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">Twitter / X Link</label>
+                <input type="text" id="setting-twitter" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="https://x.com/username" />
               </div>
               <div>
                 <label class="block text-[10px] font-bold text-slate-600 mb-1">LinkedIn Link</label>
                 <input type="text" id="setting-linkedin" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="https://linkedin.com/in/username" />
               </div>
               <div>
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">WhatsApp Link / Number</label>
+                <input type="text" id="setting-whatsapp" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="https://wa.me/15550199" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">Telegram Link</label>
+                <input type="text" id="setting-telegram" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="https://t.me/yourchannel" />
+              </div>
+              <div>
                 <label class="block text-[10px] font-bold text-slate-600 mb-1">Discord Invite Link</label>
                 <input type="text" id="setting-discord" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="https://discord.gg/invitecode" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">GitHub Link</label>
+                <input type="text" id="setting-github" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="https://github.com/yourorg" />
+              </div>
+              <div>
+                <label class="block text-[10px] font-bold text-slate-600 mb-1">Pinterest Link</label>
+                <input type="text" id="setting-pinterest" class="w-full px-3 py-2 border border-slate-200 rounded-lg text-xs" placeholder="https://pinterest.com/yourprofile" />
               </div>
             </div>
           </div>
@@ -3499,9 +3688,16 @@ async function renderContactSettings() {
       ($('setting-address') as HTMLInputElement).value = data.address || '';
       ($('setting-hours') as HTMLInputElement).value = data.businessHours || '';
       ($('setting-map') as HTMLInputElement).value = data.googleMapsEmbed || '';
+      ($('setting-facebook') as HTMLInputElement).value = data.facebook || '';
+      ($('setting-instagram') as HTMLInputElement).value = data.instagram || '';
+      ($('setting-youtube') as HTMLInputElement).value = data.youtube || '';
       ($('setting-twitter') as HTMLInputElement).value = data.twitter || '';
       ($('setting-linkedin') as HTMLInputElement).value = data.linkedin || '';
+      ($('setting-whatsapp') as HTMLInputElement).value = data.whatsapp || '';
+      ($('setting-telegram') as HTMLInputElement).value = data.telegram || '';
       ($('setting-discord') as HTMLInputElement).value = data.discord || '';
+      ($('setting-github') as HTMLInputElement).value = data.github || '';
+      ($('setting-pinterest') as HTMLInputElement).value = data.pinterest || '';
       ($('setting-support') as HTMLInputElement).value = data.supportDetails || '';
       ($('setting-form-enabled') as HTMLInputElement).checked = data.contactFormEnabled !== false;
     }
@@ -3517,19 +3713,27 @@ async function saveContactSettings(e: Event) {
   const address = ($('setting-address') as HTMLInputElement).value.trim();
   const businessHours = ($('setting-hours') as HTMLInputElement).value.trim();
   const googleMapsEmbed = ($('setting-map') as HTMLInputElement).value.trim();
+  const facebook = ($('setting-facebook') as HTMLInputElement).value.trim();
+  const instagram = ($('setting-instagram') as HTMLInputElement).value.trim();
+  const youtube = ($('setting-youtube') as HTMLInputElement).value.trim();
   const twitter = ($('setting-twitter') as HTMLInputElement).value.trim();
   const linkedin = ($('setting-linkedin') as HTMLInputElement).value.trim();
+  const whatsapp = ($('setting-whatsapp') as HTMLInputElement).value.trim();
+  const telegram = ($('setting-telegram') as HTMLInputElement).value.trim();
   const discord = ($('setting-discord') as HTMLInputElement).value.trim();
+  const github = ($('setting-github') as HTMLInputElement).value.trim();
+  const pinterest = ($('setting-pinterest') as HTMLInputElement).value.trim();
   const supportDetails = ($('setting-support') as HTMLInputElement).value.trim();
   const contactFormEnabled = ($('setting-form-enabled') as HTMLInputElement).checked;
 
   try {
     await setDoc(doc(db, 'settings', 'contact'), {
       phone, email, address, businessHours, googleMapsEmbed,
-      twitter, linkedin, discord, supportDetails, contactFormEnabled,
+      facebook, instagram, youtube, twitter, linkedin, whatsapp, telegram, discord, github, pinterest,
+      supportDetails, contactFormEnabled,
       updatedAt: serverTimestamp()
     });
-    showToast('Contact settings updated successfully!', 'success');
+    showToast('Contact & social media settings updated successfully!', 'success');
     logAdminAction('contact_settings_update', email);
   } catch (err) {
     showToast('Failed to save contact settings', 'error');
@@ -4088,6 +4292,19 @@ function attachGlobals() {
   w.closeAdComposer = closeAdComposer;
   w.renderAdSenseSettings = renderAdSenseSettings;
   w.saveAdSenseSettings = saveAdSenseSettings;
+
+  // SEO & Google Ranking Management
+  w.renderSEO = renderSEO;
+  w.saveSEOSettings = saveSEOSettings;
+  w.addTrendingHashtag = addTrendingHashtag;
+  w.removeTrendingHashtag = removeTrendingHashtag;
+  w.quickAddRankingKeyword = quickAddRankingKeyword;
+  w.generateDefaultStructuredData = generateDefaultStructuredData;
+  w.updateSeoLivePreview = updateSeoLivePreview;
+  w.copySitemapXml = copySitemapXml;
+  w.downloadSitemapXml = downloadSitemapXml;
+  w.copyRobotsTxt = copyRobotsTxt;
+  w.uploadSeoOgImage = uploadSeoOgImage;
 }
 
 // =============================================================================
@@ -4375,6 +4592,18 @@ async function renderAdvertisements() {
   }
 };
 
+// Global Blog CMS functions attached to window
+(window as any).filterBlogsTable = filterBlogsTable;
+(window as any).uploadBlogCoverImage = uploadBlogCoverImage;
+(window as any).insertBlogFormattingTag = insertBlogFormattingTag;
+(window as any).seedDefaultBlogs = seedDefaultBlogs;
+(window as any).openBlogComposer = openBlogComposer;
+(window as any).editBlogPost = editBlogPost;
+(window as any).saveBlogPost = saveBlogPost;
+(window as any).deleteBlogPostConfirm = deleteBlogPostConfirm;
+(window as any).previewBlogPost = previewBlogPost;
+(window as any).closeBlogPreview = closeBlogPreview;
+
 function openAdComposer() {
   _adEditId = null;
   const composer = $('ad-composer');
@@ -4648,6 +4877,911 @@ async function saveAdSenseSettings(e: Event) {
   } catch (err) {
     showToast('Failed to save AdSense settings', 'error');
   }
+}
+
+// =============================================================================
+// SEO & GOOGLE RANKING MANAGEMENT MODULE
+// =============================================================================
+
+let _seoHashtags: string[] = [
+  '#AIPrompts',
+  '#ChatGPT',
+  '#PromptEngineering',
+  '#MidjourneyPrompt',
+  '#GenerativeAI',
+  '#FluxAI',
+  '#AICreators',
+  '#PromptOfTheDay'
+];
+
+async function renderSEO() {
+  const container = $('admin-content');
+  if (!container) return;
+
+  container.innerHTML = `
+    <div class="space-y-6 max-w-5xl mx-auto pb-12">
+      <!-- Top Title & Quick Actions -->
+      <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-700 text-xs font-bold mb-2">
+            <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+            Google Search &amp; Meta Indexing Suite
+          </div>
+          <h2 class="text-xl font-extrabold text-slate-900 tracking-tight">SEO &amp; Google Ranking Management</h2>
+          <p class="text-xs text-slate-500 mt-1">Configure search engine metadata, Open Graph cards, Google Search Console verification, ranking keywords, and trending hashtags.</p>
+        </div>
+        <div class="flex items-center gap-2 shrink-0">
+          <button type="button" onclick="copySitemapXml()" class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs flex items-center gap-1.5 transition">
+            <i data-lucide="file-code" class="w-4 h-4 text-blue-600"></i> Sitemap.xml
+          </button>
+          <a href="https://search.google.com/search-console" target="_blank" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center gap-1.5 shadow-sm transition">
+            <i data-lucide="external-link" class="w-4 h-4"></i> Google Search Console
+          </a>
+        </div>
+      </div>
+
+      <!-- Live SERP Preview & SEO Health Score Grid -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        <!-- Google Search Result Snippet Simulation -->
+        <div class="lg:col-span-2 bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-700 flex items-center gap-2">
+              <svg class="w-4 h-4" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z"/>
+                <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z"/>
+              </svg>
+              Live Google Search Snippet Preview
+            </h3>
+            <span class="text-[10px] text-slate-400 font-semibold">Desktop &amp; Mobile SERP</span>
+          </div>
+
+          <!-- The Mock Google Card -->
+          <div class="p-4 rounded-xl bg-slate-50 border border-slate-200/80 font-sans space-y-1.5">
+            <div class="flex items-center gap-2 text-xs text-slate-600">
+              <div class="w-4 h-4 rounded-full bg-emerald-600 flex items-center justify-center text-white font-black text-[9px]">P</div>
+              <span id="serp-preview-site" class="font-semibold text-slate-800">PromptsOne</span>
+              <span class="text-slate-400">&rsaquo;</span>
+              <span id="serp-preview-url" class="text-slate-500 text-[11px] font-mono truncate">https://promptsone.com</span>
+            </div>
+            <h4 id="serp-preview-title" class="text-base sm:text-lg font-medium text-[#1a0dab] hover:underline cursor-pointer leading-tight truncate">
+              PromptsOne — Google for AI Prompts &amp; Engineering Portal
+            </h4>
+            <p id="serp-preview-desc" class="text-xs sm:text-[13px] text-[#4d5156] leading-relaxed line-clamp-2">
+              Discover, search, copy, and share 500,000+ top engineered AI prompts for ChatGPT, Midjourney, Flux, Claude, Gemini, and Sora on PromptsOne.
+            </p>
+          </div>
+        </div>
+
+        <!-- SEO Health Score & Checklist -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-4 flex flex-col justify-between">
+          <div>
+            <div class="flex items-center justify-between mb-2">
+              <h3 class="text-xs font-extrabold uppercase tracking-wider text-slate-700">SEO Health Score</h3>
+              <span id="seo-score-badge" class="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 font-black text-xs">96 / 100</span>
+            </div>
+            
+            <!-- Progress Bar -->
+            <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-3">
+              <div id="seo-score-bar" class="bg-emerald-500 h-full rounded-full transition-all duration-500" style="width: 96%"></div>
+            </div>
+
+            <!-- Audit Checklist -->
+            <ul id="seo-checklist" class="space-y-1.5 text-[11px] font-medium text-slate-600">
+              <li id="chk-title" class="flex items-center gap-2 text-emerald-600"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Title length optimal (40-65 chars)</li>
+              <li id="chk-desc" class="flex items-center gap-2 text-emerald-600"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Meta description optimal (140-165 chars)</li>
+              <li id="chk-keywords" class="flex items-center gap-2 text-emerald-600"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Ranking keywords configured</li>
+              <li id="chk-hashtags" class="flex items-center gap-2 text-emerald-600"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Trending hashtags configured</li>
+              <li id="chk-ogimage" class="flex items-center gap-2 text-emerald-600"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Social share (OG) image provided</li>
+              <li id="chk-canonical" class="flex items-center gap-2 text-emerald-600"><i data-lucide="check-circle-2" class="w-3.5 h-3.5"></i> Canonical base URL valid</li>
+              <li id="chk-gsc" class="flex items-center gap-2 text-slate-500"><i data-lucide="help-circle" class="w-3.5 h-3.5"></i> Google Search Console verification</li>
+            </ul>
+          </div>
+          <p class="text-[10px] text-slate-400 font-medium">All settings sync live to public HTML meta tags and Firestore in real time.</p>
+        </div>
+
+      </div>
+
+      <!-- Main SEO Form -->
+      <form id="seo-master-form" onsubmit="saveSEOSettings(event)" class="space-y-6">
+
+        <!-- 1. CORE SEARCH ENGINE METADATA -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-5">
+          <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div class="w-8 h-8 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center font-bold">
+              <i data-lucide="search" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">1. Core Search Engine Metadata</h3>
+              <p class="text-[11px] text-slate-500">Primary tags indexed by Google, Bing, Yahoo, and DuckDuckGo crawlers</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1 sm:col-span-2">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-bold text-slate-700">Primary Page Title (&lt;title&gt;) *</label>
+                <span id="title-char-count" class="text-[10px] font-mono text-slate-400">0 / 60 chars (Optimal: 40-60)</span>
+              </div>
+              <input 
+                type="text" 
+                id="seo-title" 
+                required 
+                placeholder="PromptsOne — Google for AI Prompts &amp; Engineering Portal" 
+                oninput="updateSeoLivePreview()"
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm font-semibold focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition" 
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">Title Format Template</label>
+              <input 
+                type="text" 
+                id="seo-title-template" 
+                placeholder="%title% | PromptsOne — AI Prompt Search Engine" 
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono focus:border-blue-500 focus:outline-none transition" 
+              />
+              <p class="text-[10px] text-slate-400">Used dynamically on prompt details, category views, and blogs.</p>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">Canonical Base URL</label>
+              <input 
+                type="url" 
+                id="seo-canonical" 
+                placeholder="https://promptsone.com/" 
+                oninput="updateSeoLivePreview()"
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono focus:border-blue-500 focus:outline-none transition" 
+              />
+              <p class="text-[10px] text-slate-400">Prevents duplicate content issues on Google.</p>
+            </div>
+
+            <div class="space-y-1 sm:col-span-2">
+              <div class="flex items-center justify-between">
+                <label class="text-xs font-bold text-slate-700">Meta Description (&lt;meta name="description"&gt;) *</label>
+                <span id="desc-char-count" class="text-[10px] font-mono text-slate-400">0 / 160 chars (Optimal: 140-160)</span>
+              </div>
+              <textarea 
+                id="seo-desc" 
+                rows="3" 
+                required 
+                placeholder="Discover, search, copy, and share 500,000+ top engineered AI prompts for ChatGPT, Midjourney, Flux, Claude, Gemini, and Sora on PromptsOne."
+                oninput="updateSeoLivePreview()"
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs sm:text-sm focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
+              ></textarea>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">Robots Indexing Directive</label>
+              <select id="seo-robots" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold focus:border-blue-500 focus:outline-none transition">
+                <option value="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1">index, follow (Recommended for Google ranking)</option>
+                <option value="index, nofollow">index, nofollow</option>
+                <option value="noindex, follow">noindex, follow</option>
+                <option value="noindex, nofollow">noindex, nofollow (Pause indexing)</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">Author / Organization Name</label>
+              <input 
+                type="text" 
+                id="seo-author" 
+                placeholder="PromptsOne AI" 
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs focus:border-blue-500 focus:outline-none transition" 
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- 2. HIGH-IMPACT GOOGLE RANKING KEYWORDS -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-4">
+          <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div class="w-8 h-8 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center font-bold">
+              <i data-lucide="key" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">2. Target Google Ranking Keywords</h3>
+              <p class="text-[11px] text-slate-500">Target search queries for Google snippet matching and internal search boosting</p>
+            </div>
+          </div>
+
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-700">Ranking Keywords (Comma separated)</label>
+            <textarea 
+              id="seo-keywords" 
+              rows="3" 
+              placeholder="ai prompts, chatgpt prompts, midjourney prompts, prompt engineering, flux prompts, deepseek prompts, claude prompts, promptsone, best ai image prompts, generative ai prompts"
+              oninput="updateSeoLivePreview()"
+              class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-100 transition"
+            ></textarea>
+
+            <div class="flex flex-wrap items-center gap-1.5 pt-1">
+              <span class="text-[10px] font-bold text-slate-400 mr-1">Quick Add:</span>
+              ${[
+                'ai prompts', 'chatgpt prompts', 'midjourney prompts', 'flux prompts',
+                'prompt engineering', 'leonardo ai', 'claude prompts', 'gemini prompts',
+                'deepseek prompts', 'best image prompts', 'promptsone'
+              ].map(k => `
+                <button type="button" onclick="quickAddRankingKeyword('${k}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-amber-50 hover:text-amber-800 text-slate-700 text-[10px] font-semibold border border-slate-200/80 transition flex items-center gap-1">
+                  <i data-lucide="plus" class="w-2.5 h-2.5"></i> ${k}
+                </button>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+
+        <!-- 3. TRENDING & SOCIAL HASHTAGS -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-4">
+          <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div class="w-8 h-8 rounded-xl bg-purple-50 text-purple-600 flex items-center justify-center font-bold">
+              <i data-lucide="hash" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">3. Trending &amp; Social Hashtags</h3>
+              <p class="text-[11px] text-slate-500">Live viral hashtags displayed on the public gallery and search suggestions</p>
+            </div>
+          </div>
+
+          <!-- Active Hashtags List -->
+          <div class="space-y-2">
+            <label class="text-xs font-bold text-slate-700">Active Hashtags</label>
+            <div id="seo-hashtags-list" class="flex flex-wrap gap-2 p-3 bg-slate-50 rounded-xl border border-slate-200 min-h-[50px] items-center">
+              <!-- Rendered via JS -->
+            </div>
+          </div>
+
+          <!-- Add New Hashtag Input -->
+          <div class="flex items-center gap-2">
+            <div class="relative flex-1 max-w-sm">
+              <span class="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 font-bold text-sm">#</span>
+              <input 
+                type="text" 
+                id="new-hashtag-input" 
+                placeholder="NewHashtag (e.g. PromptEngineering)" 
+                onkeydown="if(event.key==='Enter'){event.preventDefault();addTrendingHashtag();}"
+                class="w-full pl-7 pr-3 py-2 border border-slate-200 rounded-xl text-xs font-semibold focus:border-purple-500 focus:outline-none" 
+              />
+            </div>
+            <button type="button" onclick="addTrendingHashtag()" class="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs rounded-xl transition flex items-center gap-1.5 shadow-sm">
+              <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add Hashtag
+            </button>
+          </div>
+
+          <!-- Quick Suggestion Hashtags -->
+          <div class="flex flex-wrap items-center gap-1.5 pt-1 border-t border-slate-100">
+            <span class="text-[10px] font-bold text-slate-400 mr-1">Suggestions:</span>
+            ${[
+              '#AIPrompts', '#ChatGPT', '#MidjourneyPrompt', '#PromptEngineering',
+              '#GenerativeAI', '#FluxAI', '#AICreators', '#PromptOfTheDay', '#AIArtCommunity'
+            ].map(h => `
+              <button type="button" onclick="quickAddHashtagDirect('${h}')" class="px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-purple-50 hover:text-purple-800 text-slate-700 text-[10px] font-semibold border border-slate-200/80 transition">
+                ${h}
+              </button>
+            `).join('')}
+          </div>
+        </div>
+
+        <!-- 4. GOOGLE SEARCH CONSOLE & WEBMASTER VERIFICATION -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-4">
+          <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div class="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center font-bold">
+              <i data-lucide="shield-check" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">4. Google Search Console &amp; Webmaster Verification</h3>
+              <p class="text-[11px] text-slate-500">Proves website ownership to Google Search Console and Bing Webmaster Tools</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">Google Site Verification Token</label>
+              <input 
+                type="text" 
+                id="seo-google-verify" 
+                placeholder="e.g. google-site-verification token or code" 
+                oninput="updateSeoLivePreview()"
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono focus:border-emerald-500 focus:outline-none transition" 
+              />
+              <p class="text-[10px] text-slate-400">Injected as &lt;meta name="google-site-verification" content="..."&gt;</p>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">Bing Webmaster Verification Code</label>
+              <input 
+                type="text" 
+                id="seo-bing-verify" 
+                placeholder="e.g. msvalidate.01 token" 
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono focus:border-emerald-500 focus:outline-none transition" 
+              />
+              <p class="text-[10px] text-slate-400">Injected as &lt;meta name="msvalidate.01" content="..."&gt;</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- 5. SOCIAL SHARING & OPEN GRAPH (OG) CARDS -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-5">
+          <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div class="w-8 h-8 rounded-xl bg-indigo-50 text-indigo-600 flex items-center justify-center font-bold">
+              <i data-lucide="share-2" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">5. Social Sharing &amp; Open Graph (OG) Tags</h3>
+              <p class="text-[11px] text-slate-500">Controls how links look when shared on WhatsApp, Facebook, LinkedIn, Discord, and Telegram</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">OG Title (og:title)</label>
+              <input 
+                type="text" 
+                id="seo-og-title" 
+                placeholder="PromptsOne — Search Engine for Premium AI Prompts" 
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold focus:border-indigo-500 focus:outline-none transition" 
+              />
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">OG Site Name (og:site_name)</label>
+              <input 
+                type="text" 
+                id="seo-og-site-name" 
+                placeholder="PromptsOne" 
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold focus:border-indigo-500 focus:outline-none transition" 
+              />
+            </div>
+
+            <div class="space-y-1 sm:col-span-2">
+              <label class="text-xs font-bold text-slate-700">OG Description (og:description)</label>
+              <textarea 
+                id="seo-og-desc" 
+                rows="2" 
+                placeholder="Discover, search, copy, and share 500,000+ top engineered AI prompts for ChatGPT, Midjourney, Flux, Claude, Gemini, and Sora on PromptsOne."
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs focus:border-indigo-500 focus:outline-none transition"
+              ></textarea>
+            </div>
+
+            <div class="space-y-1 sm:col-span-2">
+              <label class="text-xs font-bold text-slate-700">OG Image URL (og:image) * Optimal 1200x630 px</label>
+              <div class="flex gap-2">
+                <input 
+                  type="text" 
+                  id="seo-og-image" 
+                  placeholder="https://images.unsplash.com/... or cloud CDN URL" 
+                  oninput="updateSeoLivePreview()"
+                  class="flex-1 px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono focus:border-indigo-500 focus:outline-none transition" 
+                />
+                <input type="file" id="seo-og-image-file" accept="image/*" class="hidden" onchange="uploadSeoOgImage(this)" />
+                <button type="button" onclick="$('seo-og-image-file').click()" class="px-4 py-2.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition flex items-center gap-1.5 shrink-0">
+                  <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload Image
+                </button>
+              </div>
+
+              <!-- OG Image Live Preview Box -->
+              <div id="seo-og-image-preview-box" class="mt-3 p-3 bg-slate-50 rounded-xl border border-slate-200 flex items-center gap-4">
+                <img id="seo-og-image-preview" src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=400&q=80" alt="OG Preview" class="w-32 h-20 object-cover rounded-lg border bg-slate-200" />
+                <div class="text-xs text-slate-500 space-y-1">
+                  <p class="font-bold text-slate-800">Social Share Thumbnail Preview</p>
+                  <p class="text-[11px]">This image will display when anyone pastes your URL into WhatsApp, Telegram, or Facebook.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 6. TWITTER / X CARD CONFIGURATION -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-5">
+          <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div class="w-8 h-8 rounded-xl bg-slate-900 text-white flex items-center justify-center font-bold">
+              <svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">6. Twitter / X Cards</h3>
+              <p class="text-[11px] text-slate-500">Rich tweet card tags for Twitter / X timeline posts</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">Twitter Card Type</label>
+              <select id="seo-twitter-card" class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-semibold focus:border-slate-900 focus:outline-none transition">
+                <option value="summary_large_image">summary_large_image (Recommended)</option>
+                <option value="summary">summary</option>
+              </select>
+            </div>
+
+            <div class="space-y-1">
+              <label class="text-xs font-bold text-slate-700">Twitter Handle / Creator</label>
+              <input 
+                type="text" 
+                id="seo-twitter-creator" 
+                placeholder="@PromptsOneAI" 
+                class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono focus:border-slate-900 focus:outline-none transition" 
+              />
+            </div>
+          </div>
+        </div>
+
+        <!-- 7. SCHEMA.ORG JSON-LD STRUCTURED DATA -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <div class="flex items-center gap-2.5">
+              <div class="w-8 h-8 rounded-xl bg-teal-50 text-teal-600 flex items-center justify-center font-bold">
+                <i data-lucide="code" class="w-4 h-4"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-extrabold text-slate-900">7. Schema.org JSON-LD Structured Data</h3>
+                <p class="text-[11px] text-slate-500">Enables Google Rich Snippets (WebSite, SearchAction Sitelinks, SoftwareApplication, Organization)</p>
+              </div>
+            </div>
+            <button type="button" onclick="generateDefaultStructuredData()" class="px-3 py-1.5 rounded-xl bg-teal-50 hover:bg-teal-100 text-teal-700 font-bold text-xs flex items-center gap-1 transition">
+              <i data-lucide="wand-2" class="w-3.5 h-3.5"></i> Auto-Generate Standard Schema
+            </button>
+          </div>
+
+          <div class="space-y-2">
+            <textarea 
+              id="seo-json-ld" 
+              rows="9" 
+              placeholder="{ &quot;@context&quot;: &quot;https://schema.org&quot;, ... }"
+              class="w-full px-3.5 py-2.5 border border-slate-200 rounded-xl text-xs font-mono bg-slate-950 text-emerald-400 focus:border-teal-500 focus:outline-none transition"
+            ></textarea>
+            <p class="text-[10px] text-slate-400">Validated against Schema.org specification. Injected inside &lt;script type="application/ld+json"&gt; in document head.</p>
+          </div>
+        </div>
+
+        <!-- 8. INSTANT SITEMAP.XML & ROBOTS.TXT SUITE -->
+        <div class="bg-white rounded-2xl p-6 border border-slate-200 shadow-card space-y-4">
+          <div class="flex items-center gap-2.5 border-b border-slate-100 pb-3">
+            <div class="w-8 h-8 rounded-xl bg-orange-50 text-orange-600 flex items-center justify-center font-bold">
+              <i data-lucide="map" class="w-4 h-4"></i>
+            </div>
+            <div>
+              <h3 class="text-sm font-extrabold text-slate-900">8. Dynamic Sitemap.xml &amp; Robots.txt Tools</h3>
+              <p class="text-[11px] text-slate-500">Fast Google indexing tools generated from live Firestore content</p>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5"><i data-lucide="file-text" class="w-4 h-4 text-orange-500"></i> Sitemap.xml</span>
+                <span class="text-[10px] text-slate-400 font-semibold" id="sitemap-url-count">Includes all prompts &amp; pages</span>
+              </div>
+              <p class="text-[11px] text-slate-500">Auto-constructs XML map containing your homepage, categories, blog articles, and approved prompt deep links.</p>
+              <div class="flex items-center gap-2 pt-1">
+                <button type="button" onclick="copySitemapXml()" class="px-3 py-1.5 bg-orange-600 hover:bg-orange-700 text-white font-bold text-xs rounded-lg transition flex items-center gap-1">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy XML
+                </button>
+                <button type="button" onclick="downloadSitemapXml()" class="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 font-bold text-xs rounded-lg transition flex items-center gap-1">
+                  <i data-lucide="download" class="w-3.5 h-3.5"></i> Download
+                </button>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+              <div class="flex items-center justify-between">
+                <span class="text-xs font-bold text-slate-800 flex items-center gap-1.5"><i data-lucide="bot" class="w-4 h-4 text-blue-500"></i> Robots.txt</span>
+                <span class="text-[10px] text-emerald-600 font-semibold font-mono">Standard Googlebot</span>
+              </div>
+              <p class="text-[11px] text-slate-500">Instructs web crawlers to index public pages while disallowing admin paths and internal API routes.</p>
+              <div class="flex items-center gap-2 pt-1">
+                <button type="button" onclick="copyRobotsTxt()" class="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-lg transition flex items-center gap-1">
+                  <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy Robots.txt
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SAVE BUTTON BAR -->
+        <div class="sticky bottom-4 z-30 bg-white/95 backdrop-blur-md p-4 rounded-2xl border border-slate-200 shadow-2xl flex items-center justify-between gap-4">
+          <div class="flex items-center gap-2 text-xs font-semibold text-slate-600 hidden sm:flex">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
+            Changes reflect instantly on live website upon save
+          </div>
+          <div class="flex items-center gap-3 w-full sm:w-auto justify-end">
+            <button type="button" onclick="adminNav('overview')" class="px-5 py-2.5 border border-slate-200 text-slate-600 hover:bg-slate-50 font-bold text-xs rounded-xl transition">
+              Cancel
+            </button>
+            <button type="submit" id="save-seo-btn" class="px-7 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs rounded-xl shadow-lg shadow-emerald-600/20 transition flex items-center gap-2">
+              <i data-lucide="save" class="w-4 h-4"></i> Save All SEO Configurations
+            </button>
+          </div>
+        </div>
+
+      </form>
+    </div>
+  `;
+  lcIcons();
+
+  // Populate data from Firestore settings/site & settings/seo
+  try {
+    const [siteSnap, seoSnap] = await Promise.all([
+      getDoc(doc(db, 'settings', 'site')),
+      getDoc(doc(db, 'settings', 'seo'))
+    ]);
+
+    const siteData = siteSnap.exists() ? siteSnap.data() : {};
+    const seoData = seoSnap.exists() ? seoSnap.data() : {};
+    const merged = { ...siteData, ...seoData };
+
+    const setVal = (id: string, val: any) => {
+      const el = $(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null;
+      if (el && val !== undefined && val !== null) el.value = String(val);
+    };
+
+    setVal('seo-title', merged.seoTitle || 'PromptsOne — Google for AI Prompts & Engineering Portal');
+    setVal('seo-title-template', merged.titleTemplate || '%title% | PromptsOne — AI Prompt Search Engine');
+    setVal('seo-desc', merged.metaDescription || 'Discover, search, copy, and share 500,000+ top engineered AI prompts for ChatGPT, Midjourney, Flux, Claude, Gemini, and Sora on PromptsOne.');
+    setVal('seo-canonical', merged.canonicalUrl || 'https://promptsone.com/');
+    setVal('seo-robots', merged.robotsDirective || 'index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1');
+    setVal('seo-author', merged.author || 'PromptsOne AI');
+    setVal('seo-keywords', merged.searchKeywords || 'ai prompts, chatgpt prompts, midjourney prompts, prompt engineering, flux prompts, claude prompts, promptsone, best ai image prompts');
+    setVal('seo-google-verify', merged.googleVerification || '');
+    setVal('seo-bing-verify', merged.bingVerification || '');
+
+    setVal('seo-og-title', merged.ogTitle || merged.seoTitle || 'PromptsOne — Search Engine for Premium AI Prompts');
+    setVal('seo-og-site-name', merged.ogSiteName || merged.brandName || 'PromptsOne');
+    setVal('seo-og-desc', merged.ogDescription || merged.metaDescription || 'Discover, search, copy, and share 500,000+ top engineered AI prompts for ChatGPT, Midjourney, Flux, Claude, Gemini, and Sora on PromptsOne.');
+    setVal('seo-og-image', merged.ogImage || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=1200&q=80');
+
+    setVal('seo-twitter-card', merged.twitterCard || 'summary_large_image');
+    setVal('seo-twitter-creator', merged.twitterCreator || '@PromptsOneAI');
+
+    if (Array.isArray(merged.trendingHashtags) && merged.trendingHashtags.length > 0) {
+      _seoHashtags = [...merged.trendingHashtags];
+    }
+    renderSeoHashtagsList();
+
+    if (merged.structuredDataOrg) {
+      setVal('seo-json-ld', merged.structuredDataOrg);
+    } else {
+      generateDefaultStructuredData();
+    }
+
+    updateSeoLivePreview();
+  } catch (err) {
+    showToast('Failed to load SEO configuration', 'warning');
+  }
+}
+
+function renderSeoHashtagsList() {
+  const container = $('seo-hashtags-list');
+  if (!container) return;
+  if (_seoHashtags.length === 0) {
+    container.innerHTML = '<span class="text-xs text-slate-400">No hashtags added yet. Type below to add.</span>';
+    return;
+  }
+  container.innerHTML = _seoHashtags.map((tag, idx) => `
+    <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-bold shadow-xs">
+      ${escapeHtml(tag)}
+      <button type="button" onclick="removeTrendingHashtag(${idx})" class="w-3.5 h-3.5 rounded-full hover:bg-purple-200 flex items-center justify-center text-purple-600 transition" title="Remove hashtag">
+        &times;
+      </button>
+    </span>
+  `).join('');
+}
+
+function addTrendingHashtag() {
+  const input = $('new-hashtag-input') as HTMLInputElement | null;
+  if (!input) return;
+  let val = input.value.trim();
+  if (!val) return;
+  if (!val.startsWith('#')) val = '#' + val;
+  if (!_seoHashtags.includes(val)) {
+    _seoHashtags.push(val);
+    renderSeoHashtagsList();
+    updateSeoLivePreview();
+  }
+  input.value = '';
+}
+
+function removeTrendingHashtag(idx: number) {
+  _seoHashtags.splice(idx, 1);
+  renderSeoHashtagsList();
+  updateSeoLivePreview();
+}
+
+(window as any).quickAddHashtagDirect = (tag: string) => {
+  if (!_seoHashtags.includes(tag)) {
+    _seoHashtags.push(tag);
+    renderSeoHashtagsList();
+    updateSeoLivePreview();
+    showToast(`Added ${tag}`, 'info');
+  }
+};
+
+function quickAddRankingKeyword(kw: string) {
+  const input = $('seo-keywords') as HTMLTextAreaElement | null;
+  if (!input) return;
+  const cur = input.value.trim();
+  if (!cur) {
+    input.value = kw;
+  } else if (!cur.toLowerCase().includes(kw.toLowerCase())) {
+    input.value = cur + ', ' + kw;
+  }
+  updateSeoLivePreview();
+  showToast(`Added "${kw}" to ranking keywords`, 'info');
+}
+
+function generateDefaultStructuredData() {
+  const siteTitle = ($('seo-title') as HTMLInputElement)?.value.trim() || 'PromptsOne';
+  const canonicalUrl = ($('seo-canonical') as HTMLInputElement)?.value.trim() || 'https://promptsone.com/';
+  const metaDesc = ($('seo-desc') as HTMLTextAreaElement)?.value.trim() || 'The world largest AI prompt search engine & engineering marketplace.';
+
+  const schema = {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "WebSite",
+        "@id": `${canonicalUrl.replace(/\/$/, '')}/#website`,
+        "url": canonicalUrl,
+        "name": siteTitle,
+        "description": metaDesc,
+        "potentialAction": {
+          "@type": "SearchAction",
+          "target": {
+            "@type": "EntryPoint",
+            "urlTemplate": `${canonicalUrl.replace(/\/$/, '')}/#search?q={search_term_string}`
+          },
+          "query-input": "required name=search_term_string"
+        }
+      },
+      {
+        "@type": "WebApplication",
+        "@id": `${canonicalUrl.replace(/\/$/, '')}/#app`,
+        "name": siteTitle,
+        "url": canonicalUrl,
+        "applicationCategory": "DesignApplication",
+        "operatingSystem": "All",
+        "description": metaDesc,
+        "offers": {
+          "@type": "Offer",
+          "price": "0",
+          "priceCurrency": "USD"
+        }
+      },
+      {
+        "@type": "Organization",
+        "@id": `${canonicalUrl.replace(/\/$/, '')}/#organization`,
+        "name": "PromptsOne",
+        "url": canonicalUrl,
+        "logo": `${canonicalUrl.replace(/\/$/, '')}/favicon.ico`,
+        "sameAs": [
+          "https://twitter.com/PromptsOneAI",
+          "https://discord.gg/promptverse"
+        ]
+      }
+    ]
+  };
+
+  const textarea = $('seo-json-ld') as HTMLTextAreaElement | null;
+  if (textarea) {
+    textarea.value = JSON.stringify(schema, null, 2);
+  }
+  updateSeoLivePreview();
+  showToast('Standard Schema.org structured data generated!', 'success');
+}
+
+function updateSeoLivePreview() {
+  const title = ($('seo-title') as HTMLInputElement)?.value.trim() || 'PromptsOne';
+  const desc = ($('seo-desc') as HTMLTextAreaElement)?.value.trim() || '';
+  const canonical = ($('seo-canonical') as HTMLInputElement)?.value.trim() || 'https://promptsone.com';
+  const keywords = ($('seo-keywords') as HTMLTextAreaElement)?.value.trim() || '';
+  const ogImg = ($('seo-og-image') as HTMLInputElement)?.value.trim() || '';
+  const googleVerify = ($('seo-google-verify') as HTMLInputElement)?.value.trim() || '';
+
+  // Update SERP preview card
+  const previewTitle = $('serp-preview-title');
+  if (previewTitle) previewTitle.textContent = title;
+  const previewDesc = $('serp-preview-desc');
+  if (previewDesc) previewDesc.textContent = desc || 'Search engine snippet description will display here...';
+  const previewUrl = $('serp-preview-url');
+  if (previewUrl) previewUrl.textContent = canonical;
+
+  // Update char counters
+  const titleCount = $('title-char-count');
+  if (titleCount) {
+    const len = title.length;
+    titleCount.textContent = `${len} / 60 chars (${len >= 40 && len <= 65 ? 'Optimal' : len < 40 ? 'Too short' : 'Too long'})`;
+    titleCount.className = `text-[10px] font-mono ${len >= 40 && len <= 65 ? 'text-emerald-600 font-bold' : 'text-amber-500'}`;
+  }
+
+  const descCount = $('desc-char-count');
+  if (descCount) {
+    const len = desc.length;
+    descCount.textContent = `${len} / 160 chars (${len >= 130 && len <= 165 ? 'Optimal' : len < 130 ? 'Too short' : 'Too long'})`;
+    descCount.className = `text-[10px] font-mono ${len >= 130 && len <= 165 ? 'text-emerald-600 font-bold' : 'text-amber-500'}`;
+  }
+
+  // Update OG image preview
+  const ogImgEl = $('seo-og-image-preview') as HTMLImageElement | null;
+  if (ogImgEl && ogImg) {
+    ogImgEl.src = ogImg;
+  }
+
+  // Calculate live health score
+  let score = 0;
+  const checks = {
+    title: title.length >= 35 && title.length <= 70,
+    desc: desc.length >= 100 && desc.length <= 180,
+    keywords: keywords.split(',').filter(k => k.trim()).length >= 4,
+    hashtags: _seoHashtags.length >= 3,
+    ogimage: !!ogImg,
+    canonical: canonical.startsWith('http'),
+    gsc: !!googleVerify,
+  };
+
+  if (checks.title) score += 20;
+  if (checks.desc) score += 20;
+  if (checks.keywords) score += 15;
+  if (checks.hashtags) score += 15;
+  if (checks.ogimage) score += 10;
+  if (checks.canonical) score += 10;
+  if (checks.gsc) score += 10;
+
+  const scoreBadge = $('seo-score-badge');
+  if (scoreBadge) {
+    scoreBadge.textContent = `${score} / 100`;
+    scoreBadge.className = `px-2 py-0.5 rounded-full font-black text-xs ${score >= 85 ? 'bg-emerald-100 text-emerald-700' : score >= 65 ? 'bg-amber-100 text-amber-700' : 'bg-rose-100 text-rose-700'}`;
+  }
+
+  const scoreBar = $('seo-score-bar');
+  if (scoreBar) {
+    scoreBar.style.width = `${score}%`;
+    scoreBar.className = `h-full rounded-full transition-all duration-500 ${score >= 85 ? 'bg-emerald-500' : score >= 65 ? 'bg-amber-500' : 'bg-rose-500'}`;
+  }
+
+  const updateChk = (id: string, ok: boolean, label: string) => {
+    const el = $(id);
+    if (!el) return;
+    el.className = `flex items-center gap-2 ${ok ? 'text-emerald-600' : 'text-slate-400'}`;
+    el.innerHTML = `<i data-lucide="${ok ? 'check-circle-2' : 'circle'}" class="w-3.5 h-3.5"></i> ${label}`;
+  };
+
+  updateChk('chk-title', checks.title, 'Title length optimal (40-65 chars)');
+  updateChk('chk-desc', checks.desc, 'Meta description optimal (140-165 chars)');
+  updateChk('chk-keywords', checks.keywords, 'Ranking keywords configured');
+  updateChk('chk-hashtags', checks.hashtags, 'Trending hashtags configured');
+  updateChk('chk-ogimage', checks.ogimage, 'Social share (OG) image provided');
+  updateChk('chk-canonical', checks.canonical, 'Canonical base URL valid');
+  updateChk('chk-gsc', checks.gsc, checks.gsc ? 'Google Search Console verified' : 'Google Search Console verification (Optional)');
+
+  lcIcons();
+}
+
+async function uploadSeoOgImage(input: HTMLInputElement) {
+  if (!input.files?.[0]) return;
+  const file = input.files[0];
+  showToast('Uploading Open Graph thumbnail to CDN...', 'info');
+  try {
+    const url = await uploadToCloudinary(file);
+    const ogInput = $('seo-og-image') as HTMLInputElement | null;
+    if (ogInput) ogInput.value = url;
+    updateSeoLivePreview();
+    showToast('OG image uploaded successfully!', 'success');
+  } catch (err: any) {
+    showToast(err.message || 'Image upload failed', 'error');
+  }
+}
+
+async function saveSEOSettings(e: Event) {
+  e.preventDefault();
+  const btn = $('save-seo-btn') as HTMLButtonElement | null;
+  if (btn) { btn.disabled = true; btn.innerHTML = `<i data-lucide="loader-2" class="w-4 h-4 animate-spin"></i> Saving SEO configurations...`; lcIcons(); }
+
+  const getVal = (id: string) => ($(id) as HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement | null)?.value.trim() || '';
+
+  const seoTitle = getVal('seo-title');
+  const titleTemplate = getVal('seo-title-template');
+  const metaDescription = getVal('seo-desc');
+  const canonicalUrl = getVal('seo-canonical');
+  const robotsDirective = getVal('seo-robots');
+  const author = getVal('seo-author');
+  const searchKeywords = getVal('seo-keywords');
+  const googleVerification = getVal('seo-google-verify');
+  const bingVerification = getVal('seo-bing-verify');
+
+  const ogTitle = getVal('seo-og-title');
+  const ogSiteName = getVal('seo-og-site-name');
+  const ogDescription = getVal('seo-og-desc');
+  const ogImage = getVal('seo-og-image');
+
+  const twitterCard = getVal('seo-twitter-card');
+  const twitterCreator = getVal('seo-twitter-creator');
+
+  const structuredDataOrg = getVal('seo-json-ld');
+
+  const seoPayload = {
+    seoTitle,
+    titleTemplate,
+    metaDescription,
+    canonicalUrl,
+    robotsDirective,
+    author,
+    searchKeywords,
+    googleVerification,
+    bingVerification,
+    ogTitle,
+    ogSiteName,
+    ogDescription,
+    ogImage,
+    twitterCard,
+    twitterCreator,
+    structuredDataOrg,
+    trendingHashtags: _seoHashtags,
+    updatedAt: serverTimestamp()
+  };
+
+  try {
+    // Write to both settings/site and settings/seo for seamless real-time syncing
+    await Promise.all([
+      setDoc(doc(db, 'settings', 'site'), seoPayload, { merge: true }),
+      setDoc(doc(db, 'settings', 'seo'), seoPayload, { merge: true })
+    ]);
+
+    showToast('SEO & Google Ranking configurations saved successfully!', 'success');
+    logAdminAction('seo_settings_update', 'settings/seo');
+  } catch (err) {
+    showToast('Failed to save SEO configurations', 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = `<i data-lucide="save" class="w-4 h-4"></i> Save All SEO Configurations`;
+      lcIcons();
+    }
+  }
+}
+
+function generateSitemapXmlContent(): string {
+  const canonical = (($('seo-canonical') as HTMLInputElement)?.value.trim() || 'https://promptsone.com').replace(/\/$/, '');
+  const now = new Date().toISOString().split('T')[0];
+
+  const approved = allPrompts.filter(p => p.status === 'approved');
+
+  let urls = `  <url>\n    <loc>${canonical}/</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>1.0</priority>\n  </url>\n`;
+  urls += `  <url>\n    <loc>${canonical}/#search</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>daily</changefreq>\n    <priority>0.9</priority>\n  </url>\n`;
+  urls += `  <url>\n    <loc>${canonical}/#blog</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+  urls += `  <url>\n    <loc>${canonical}/#collections</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.8</priority>\n  </url>\n`;
+
+  allCategories.forEach(c => {
+    urls += `  <url>\n    <loc>${canonical}/#search?category=${encodeURIComponent(c.name)}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>weekly</changefreq>\n    <priority>0.7</priority>\n  </url>\n`;
+  });
+
+  approved.slice(0, 500).forEach(p => {
+    urls += `  <url>\n    <loc>${canonical}/#prompt/${p.id}</loc>\n    <lastmod>${now}</lastmod>\n    <changefreq>monthly</changefreq>\n    <priority>0.6</priority>\n  </url>\n`;
+  });
+
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls}</urlset>`;
+}
+
+function copySitemapXml() {
+  const xml = generateSitemapXmlContent();
+  navigator.clipboard.writeText(xml).then(() => {
+    showToast('Dynamic sitemap.xml copied to clipboard!', 'success');
+  }).catch(() => {
+    downloadFile(xml, 'sitemap.xml', 'application/xml');
+  });
+}
+
+function downloadSitemapXml() {
+  const xml = generateSitemapXmlContent();
+  downloadFile(xml, 'sitemap.xml', 'application/xml');
+  showToast('sitemap.xml downloaded!', 'success');
+}
+
+function copyRobotsTxt() {
+  const canonical = (($('seo-canonical') as HTMLInputElement)?.value.trim() || 'https://promptsone.com').replace(/\/$/, '');
+  const txt = `User-agent: *\nAllow: /\nDisallow: /admin.html\nDisallow: /api/\n\nSitemap: ${canonical}/sitemap.xml\n`;
+  navigator.clipboard.writeText(txt).then(() => {
+    showToast('robots.txt content copied to clipboard!', 'success');
+  }).catch(() => {
+    downloadFile(txt, 'robots.txt', 'text/plain');
+  });
 }
 
 function formatNumber(num: number): string {
