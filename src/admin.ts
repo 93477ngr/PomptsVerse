@@ -49,6 +49,7 @@ interface PromptItem {
   tool: string;
   category: string;
   image: string;
+  images?: string[];
   prompt: string;
   negative?: string;
   views: number;
@@ -960,7 +961,92 @@ async function bulkDelete() {
   });
 }
 
-// Prompt Modal
+// Prompt Modal & Multi-Image Gallery
+let adminFormImages: string[] = [];
+
+function renderAdminFormImages() {
+  const grid = $('pf-images-preview-grid');
+  const counter = $('pf-images-counter');
+  if (counter) {
+    counter.textContent = `${adminFormImages.length} image${adminFormImages.length !== 1 ? 's' : ''} added`;
+  }
+  if (!grid) return;
+  if (adminFormImages.length === 0) {
+    grid.innerHTML = '';
+    grid.classList.add('hidden');
+    return;
+  }
+  grid.classList.remove('hidden');
+  grid.innerHTML = adminFormImages.map((img, idx) => `
+    <div class="relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-900 aspect-square flex items-center justify-center p-1">
+      <img src="${img}" alt="Preview ${idx + 1}" class="max-w-full max-h-full object-contain" />
+      <button type="button" onclick="removeAdminFormImage(${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-[10px] shadow transition" title="Remove image">
+        <i data-lucide="x" class="w-3 h-3"></i>
+      </button>
+      ${idx === 0 ? `<span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-blue-600 text-white text-[9px] font-bold">Cover</span>` : ''}
+    </div>
+  `).join('');
+  lcIcons();
+}
+
+function removeAdminFormImage(idx: number) {
+  if (idx >= 0 && idx < adminFormImages.length) {
+    adminFormImages.splice(idx, 1);
+    renderAdminFormImages();
+  }
+}
+
+function addAdminImageUrl() {
+  const input = $('pf-image-url') as HTMLInputElement | null;
+  const url = input?.value.trim() || '';
+  if (!url) {
+    showToast('Enter an image URL first', 'warning');
+    return;
+  }
+  adminFormImages.push(url);
+  if (input) input.value = '';
+  renderAdminFormImages();
+  showToast('Image URL added!', 'success');
+}
+
+async function uploadAdminImage(input?: HTMLInputElement) {
+  const fileInput = input || ($('pf-image-file') as HTMLInputElement);
+  if (!fileInput?.files || fileInput.files.length === 0) return;
+  const files = Array.from(fileInput.files);
+  const btn = $('upload-img-btn') as HTMLButtonElement | null;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Uploading...';
+  }
+  showToast(`Uploading ${files.length} image(s) to cloud CDN...`, 'info');
+  try {
+    for (let i = 0; i < files.length; i++) {
+      const url = await uploadToCloudinary(files[i]);
+      if (url) adminFormImages.push(url);
+    }
+    fileInput.value = '';
+    renderAdminFormImages();
+    showToast(`${files.length} image(s) uploaded successfully!`, 'success');
+  } catch (err: any) {
+    showToast(`Upload failed: ${err.message}`, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload Files';
+      lcIcons();
+    }
+  }
+}
+
+function uploadAdminImageBtn() {
+  const fileInput = $('pf-image-file') as HTMLInputElement | null;
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    showToast('Please select image file(s) first', 'warning');
+    return;
+  }
+  uploadAdminImage(fileInput);
+}
+
 function openPromptModal(id?: string) {
   const modal = $('prompt-modal');
   if (!modal) return;
@@ -978,21 +1064,21 @@ function openPromptModal(id?: string) {
     ($('pf-tool') as HTMLSelectElement).value = p.tool;
     categoryToSet = p.category || 'Festivals';
     ($('pf-status') as HTMLSelectElement).value = p.status || 'pending';
-    ($('pf-image-url') as HTMLInputElement).value = p.image || '';
+    ($('pf-image-url') as HTMLInputElement).value = '';
     ($('pf-prompt') as HTMLTextAreaElement).value = p.prompt;
     ($('pf-negative') as HTMLTextAreaElement).value = p.negative || '';
     ($('pf-tags') as HTMLInputElement).value = (p.tags || []).join(', ');
     ($('pf-featured') as HTMLInputElement).checked = !!p.featured;
     ($('pf-trending') as HTMLInputElement).checked = !!p.trending;
-    const preview = $('pf-image-preview');
-    const previewImg = $('pf-preview-img') as HTMLImageElement;
-    if (p.image && preview && previewImg) {
-      previewImg.src = p.image;
-      preview.classList.remove('hidden');
-    }
+    
+    adminFormImages = (p.images && Array.isArray(p.images) && p.images.length > 0)
+      ? [...p.images]
+      : (p.image ? [p.image] : []);
+    renderAdminFormImages();
   } else {
     ($('pf-id') as HTMLInputElement).value = '';
-    hide('pf-image-preview');
+    adminFormImages = [];
+    renderAdminFormImages();
   }
 
   updateCategorySelectOptions(categoryToSet);
@@ -1019,7 +1105,10 @@ async function handleSavePrompt(e: Event) {
   const tool = ($('pf-tool') as HTMLSelectElement).value;
   const category = ($('pf-category') as HTMLSelectElement).value;
   const status = ($('pf-status') as HTMLSelectElement).value as 'approved' | 'pending' | 'rejected';
-  let image = ($('pf-image-url') as HTMLInputElement).value.trim();
+  const singleUrl = ($('pf-image-url') as HTMLInputElement)?.value.trim() || '';
+  if (singleUrl && !adminFormImages.includes(singleUrl)) {
+    adminFormImages.push(singleUrl);
+  }
   const promptText = ($('pf-prompt') as HTMLTextAreaElement).value.trim();
   const negative = ($('pf-negative') as HTMLTextAreaElement).value.trim();
   const tagsRaw = ($('pf-tags') as HTMLInputElement).value.trim();
@@ -1035,10 +1124,13 @@ async function handleSavePrompt(e: Event) {
 
   // Upload image file if selected
   const fileInput = $('pf-image-file') as HTMLInputElement;
-  if (fileInput?.files?.[0]) {
+  if (fileInput?.files && fileInput.files.length > 0 && adminFormImages.length === 0) {
     try {
-      showToast('Uploading image to cloud CDN...', 'info');
-      image = await uploadToCloudinary(fileInput.files[0]);
+      showToast('Uploading images to cloud CDN...', 'info');
+      for (let i = 0; i < fileInput.files.length; i++) {
+        const url = await uploadToCloudinary(fileInput.files[i]);
+        if (url) adminFormImages.push(url);
+      }
     } catch (err: any) {
       showToast(`Image upload failed: ${err.message}`, 'error');
       if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Save Prompt'; lcIcons(); }
@@ -1046,29 +1138,37 @@ async function handleSavePrompt(e: Event) {
     }
   }
 
+  const finalImages = [...adminFormImages];
+  const primaryImage = finalImages[0] || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
   const currentUid = auth.currentUser?.uid || currentAdminUser?.uid || '';
   const currentName = auth.currentUser?.displayName || currentAdminUser?.displayName || auth.currentUser?.email?.split('@')[0] || 'PromptVerse Admin';
 
   try {
     if (id) {
       await updateDoc(doc(db, 'prompts', id), {
-        title, tool, category, status, image, prompt: promptText, negative, tags, featured, trending,
+        title, tool, category, status,
+        image: primaryImage,
+        images: finalImages,
+        prompt: promptText, negative, tags, featured, trending,
         updatedAt: serverTimestamp()
       });
       const idx = allPrompts.findIndex(p => p.id === id);
-      if (idx !== -1) Object.assign(allPrompts[idx], { title, tool, category, status, image, prompt: promptText, negative, tags, featured, trending });
+      if (idx !== -1) Object.assign(allPrompts[idx], { title, tool, category, status, image: primaryImage, images: finalImages, prompt: promptText, negative, tags, featured, trending });
       showToast('Prompt updated!', 'success');
       try { logAdminAction('prompt_edit', id); } catch (_) {}
     } else {
       const docRef = await addDoc(collection(db, 'prompts'), {
-        title, tool, category, status, image, prompt: promptText, negative, tags, featured, trending,
+        title, tool, category, status,
+        image: primaryImage,
+        images: finalImages,
+        prompt: promptText, negative, tags, featured, trending,
         views: 0, likes: 0, downloads: 0, copyCount: 0, seasonalTags: [],
         creator: currentName,
         creatorId: currentUid,
         rankScore: 0,
         createdAt: serverTimestamp(), updatedAt: serverTimestamp()
       });
-      allPrompts.unshift({ id: docRef.id, title, tool, category, status, image, prompt: promptText, negative, tags, featured, trending,
+      allPrompts.unshift({ id: docRef.id, title, tool, category, status, image: primaryImage, images: finalImages, prompt: promptText, negative, tags, featured, trending,
         views: 0, likes: 0, downloads: 0, copyCount: 0, creator: currentName });
       showToast('Prompt created!', 'success');
       try { logAdminAction('prompt_create', docRef.id); } catch (_) {}
@@ -1080,25 +1180,6 @@ async function handleSavePrompt(e: Event) {
     showToast(`Save failed: ${err.message}`, 'error');
   } finally {
     if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="save" class="w-4 h-4"></i> Save Prompt'; lcIcons(); }
-  }
-}
-
-async function uploadAdminImage() {
-  const fileInput = $('pf-image-file') as HTMLInputElement;
-  if (!fileInput?.files?.[0]) { showToast('Select an image file first', 'warning'); return; }
-  const btn = $('upload-img-btn') as HTMLButtonElement;
-  if (btn) { btn.disabled = true; btn.textContent = 'Uploading...'; }
-  try {
-    const url = await uploadToCloudinary(fileInput.files[0]);
-    ($('pf-image-url') as HTMLInputElement).value = url;
-    const previewImg = $('pf-preview-img') as HTMLImageElement;
-    const preview = $('pf-image-preview');
-    if (previewImg && preview) { previewImg.src = url; preview.classList.remove('hidden'); }
-    showToast('Image uploaded successfully!', 'success');
-  } catch (err: any) {
-    showToast(`Upload failed: ${err.message}`, 'error');
-  } finally {
-    if (btn) { btn.disabled = false; btn.innerHTML = '<i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload'; lcIcons(); }
   }
 }
 
@@ -3683,21 +3764,38 @@ async function renderContactSettings() {
     const docSnap = await getDoc(doc(db, 'settings', 'contact'));
     if (docSnap.exists()) {
       const data = docSnap.data();
+      const sanitizeLoad = (val: any) => {
+        if (!val || typeof val !== 'string') return '';
+        const lower = val.toLowerCase();
+        if (
+          lower.includes('yourhandle') ||
+          lower.includes('yourpage') ||
+          lower.includes('yourchannel') ||
+          lower.includes('/username') ||
+          lower.includes('invitecode') ||
+          lower.includes('yourorg') ||
+          lower.includes('yourprofile')
+        ) {
+          return '';
+        }
+        return val.trim();
+      };
+
       ($('setting-phone') as HTMLInputElement).value = data.phone || '';
       ($('setting-email') as HTMLInputElement).value = data.email || '';
       ($('setting-address') as HTMLInputElement).value = data.address || '';
       ($('setting-hours') as HTMLInputElement).value = data.businessHours || '';
       ($('setting-map') as HTMLInputElement).value = data.googleMapsEmbed || '';
-      ($('setting-facebook') as HTMLInputElement).value = data.facebook || '';
-      ($('setting-instagram') as HTMLInputElement).value = data.instagram || '';
-      ($('setting-youtube') as HTMLInputElement).value = data.youtube || '';
-      ($('setting-twitter') as HTMLInputElement).value = data.twitter || '';
-      ($('setting-linkedin') as HTMLInputElement).value = data.linkedin || '';
-      ($('setting-whatsapp') as HTMLInputElement).value = data.whatsapp || '';
-      ($('setting-telegram') as HTMLInputElement).value = data.telegram || '';
-      ($('setting-discord') as HTMLInputElement).value = data.discord || '';
-      ($('setting-github') as HTMLInputElement).value = data.github || '';
-      ($('setting-pinterest') as HTMLInputElement).value = data.pinterest || '';
+      ($('setting-facebook') as HTMLInputElement).value = sanitizeLoad(data.facebook);
+      ($('setting-instagram') as HTMLInputElement).value = sanitizeLoad(data.instagram);
+      ($('setting-youtube') as HTMLInputElement).value = sanitizeLoad(data.youtube);
+      ($('setting-twitter') as HTMLInputElement).value = sanitizeLoad(data.twitter);
+      ($('setting-linkedin') as HTMLInputElement).value = sanitizeLoad(data.linkedin);
+      ($('setting-whatsapp') as HTMLInputElement).value = sanitizeLoad(data.whatsapp);
+      ($('setting-telegram') as HTMLInputElement).value = sanitizeLoad(data.telegram);
+      ($('setting-discord') as HTMLInputElement).value = sanitizeLoad(data.discord);
+      ($('setting-github') as HTMLInputElement).value = sanitizeLoad(data.github);
+      ($('setting-pinterest') as HTMLInputElement).value = sanitizeLoad(data.pinterest);
       ($('setting-support') as HTMLInputElement).value = data.supportDetails || '';
       ($('setting-form-enabled') as HTMLInputElement).checked = data.contactFormEnabled !== false;
     }
@@ -3708,21 +3806,42 @@ async function renderContactSettings() {
 
 async function saveContactSettings(e: Event) {
   e.preventDefault();
+  const sanitizeSave = (id: string) => {
+    const el = $(id) as HTMLInputElement | null;
+    const val = (el?.value || '').trim();
+    if (!val) return '';
+    const lower = val.toLowerCase();
+    if (
+      lower.includes('yourhandle') ||
+      lower.includes('yourpage') ||
+      lower.includes('yourchannel') ||
+      lower.includes('/username') ||
+      lower.includes('invitecode') ||
+      lower.includes('yourorg') ||
+      lower.includes('yourprofile')
+    ) {
+      return '';
+    }
+    return val;
+  };
+
   const phone = ($('setting-phone') as HTMLInputElement).value.trim();
   const email = ($('setting-email') as HTMLInputElement).value.trim();
   const address = ($('setting-address') as HTMLInputElement).value.trim();
   const businessHours = ($('setting-hours') as HTMLInputElement).value.trim();
   const googleMapsEmbed = ($('setting-map') as HTMLInputElement).value.trim();
-  const facebook = ($('setting-facebook') as HTMLInputElement).value.trim();
-  const instagram = ($('setting-instagram') as HTMLInputElement).value.trim();
-  const youtube = ($('setting-youtube') as HTMLInputElement).value.trim();
-  const twitter = ($('setting-twitter') as HTMLInputElement).value.trim();
-  const linkedin = ($('setting-linkedin') as HTMLInputElement).value.trim();
-  const whatsapp = ($('setting-whatsapp') as HTMLInputElement).value.trim();
-  const telegram = ($('setting-telegram') as HTMLInputElement).value.trim();
-  const discord = ($('setting-discord') as HTMLInputElement).value.trim();
-  const github = ($('setting-github') as HTMLInputElement).value.trim();
-  const pinterest = ($('setting-pinterest') as HTMLInputElement).value.trim();
+  
+  const facebook = sanitizeSave('setting-facebook');
+  const instagram = sanitizeSave('setting-instagram');
+  const youtube = sanitizeSave('setting-youtube');
+  const twitter = sanitizeSave('setting-twitter');
+  const linkedin = sanitizeSave('setting-linkedin');
+  const whatsapp = sanitizeSave('setting-whatsapp');
+  const telegram = sanitizeSave('setting-telegram');
+  const discord = sanitizeSave('setting-discord');
+  const github = sanitizeSave('setting-github');
+  const pinterest = sanitizeSave('setting-pinterest');
+  
   const supportDetails = ($('setting-support') as HTMLInputElement).value.trim();
   const contactFormEnabled = ($('setting-form-enabled') as HTMLInputElement).checked;
 
@@ -4591,6 +4710,12 @@ async function renderAdvertisements() {
     showToast(err.message || 'Asset upload failed', 'error');
   }
 };
+
+// Global Prompt & Multi-Image functions attached to window
+(window as any).addAdminImageUrl = addAdminImageUrl;
+(window as any).removeAdminFormImage = removeAdminFormImage;
+(window as any).uploadAdminImage = uploadAdminImage;
+(window as any).uploadAdminImageBtn = uploadAdminImageBtn;
 
 // Global Blog CMS functions attached to window
 (window as any).filterBlogsTable = filterBlogsTable;

@@ -267,9 +267,6 @@
       <button onclick="navigateTo('contact'); toggleMobileMenu()" class="w-full text-left px-3 py-2 rounded-lg text-slate-700 hover:bg-slate-100 font-medium flex items-center gap-2">
         <i data-lucide="mail" class="w-4 h-4"></i> Contact Us
       </button>
-      <a href="/admin.html" target="_blank" class="w-full text-left px-3 py-2 rounded-lg text-purple-700 hover:bg-purple-50 font-medium flex items-center gap-2">
-        <i data-lucide="shield" class="w-4 h-4 text-purple-600"></i> Admin Panel
-      </a>
       <div id="mobile-auth-section" class="pt-2 border-t border-slate-100">
         <!-- Rendered by app.ts -->
       </div>
@@ -526,17 +523,35 @@
             <div class="bg-white rounded-3xl p-6 border border-slate-200/80 shadow-card space-y-6">
               <div class="grid grid-cols-1 md:grid-cols-12 gap-6">
                 
-                <!-- Left: Large High Quality Preview Image (Full View, Uncropped) -->
+                <!-- Left: Large High Quality Preview Image (Clean Fit, Multi-Image Slider) -->
                 <div class="md:col-span-5 space-y-3">
-                  <div class="relative rounded-2xl overflow-hidden bg-slate-950 group shadow-md h-80 sm:h-[440px] max-h-[460px] border border-slate-200/80 flex items-center justify-center">
-                    <img id="detail-image-bg" src="" alt="" class="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 pointer-events-none" />
-                    <img id="detail-image" src="" alt="Prompt Preview" class="relative z-10 max-w-full max-h-full object-contain p-2 transition duration-500 group-hover:scale-[1.02] opacity-0" onload="this.classList.remove('opacity-0')" />
-                    <div class="absolute inset-0 z-20 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition duration-300 flex items-end justify-between p-4 pointer-events-none">
-                      <span class="text-white text-xs font-semibold backdrop-blur-md bg-black/40 px-2.5 py-1 rounded-lg">Full Size Preview</span>
-                      <button onclick="window.open(document.getElementById('detail-image').src, '_blank')" class="p-2 rounded-lg bg-white/90 hover:bg-white text-slate-900 shadow transition pointer-events-auto" title="Open Full Screen">
+                  <div class="relative rounded-2xl overflow-hidden bg-[#f4f7f5] group shadow-sm min-h-[320px] sm:h-[460px] md:h-[500px] border border-[#dde8df] flex items-center justify-center">
+                    <img id="detail-image" src="" alt="Prompt Preview" class="w-full h-full object-cover object-center transition-transform duration-300 opacity-0" onload="this.classList.remove('opacity-0')" onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=800&q=80'; this.classList.remove('opacity-0');" />
+                    
+                    <!-- Carousel Navigation Arrows (visible when multiple images present) -->
+                    <button id="carousel-prev-btn" onclick="prevDetailImage(event)" class="hidden absolute left-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition backdrop-blur-md shadow-md" title="Previous Image">
+                      <i data-lucide="chevron-left" class="w-5 h-5"></i>
+                    </button>
+                    <button id="carousel-next-btn" onclick="nextDetailImage(event)" class="hidden absolute right-3 top-1/2 -translate-y-1/2 z-30 w-9 h-9 rounded-full bg-black/60 hover:bg-black/90 text-white flex items-center justify-center transition backdrop-blur-md shadow-md" title="Next Image">
+                      <i data-lucide="chevron-right" class="w-5 h-5"></i>
+                    </button>
+
+                    <!-- Slide Counter Badge -->
+                    <div class="absolute bottom-3 left-3 z-20 flex items-center gap-2">
+                      <span id="detail-carousel-counter" class="hidden text-white text-[11px] font-extrabold backdrop-blur-md bg-black/70 border border-white/10 px-2.5 py-1 rounded-lg">1 / 1</span>
+                    </div>
+
+                    <!-- Full Size Preview Button -->
+                    <div class="absolute bottom-3 right-3 z-20">
+                      <button onclick="openCurrentFullscreenImage()" class="p-2 rounded-lg bg-black/60 hover:bg-black/90 text-white shadow backdrop-blur-md transition border border-white/10 flex items-center justify-center" title="Open Full Screen">
                         <i data-lucide="maximize-2" class="w-4 h-4"></i>
                       </button>
                     </div>
+                  </div>
+
+                  <!-- Thumbnails Slider Strip (shown when prompt has multiple images) -->
+                  <div id="detail-carousel-thumbs" class="flex items-center gap-2 overflow-x-auto pb-1 hide-scrollbar">
+                    <!-- Populated dynamically by app.ts -->
                   </div>
                 </div>
 
@@ -1023,6 +1038,14 @@
                 <p id="contact-page-hours" class="text-slate-300 mt-0.5">Loading...</p>
               </div>
             </div>
+
+            <!-- Social Media Channels & Connect -->
+            <div class="pt-2 border-t border-white/10 space-y-2">
+              <p class="text-xs font-bold text-white">Connect with Us</p>
+              <div id="contact-page-social-links" class="flex flex-wrap items-center gap-2">
+                <!-- Dynamically populated from configured links -->
+              </div>
+            </div>
           </div>
 
           <!-- Dynamic Embed Google Map -->
@@ -1329,20 +1352,30 @@
         </div>
 
         <div class="space-y-2">
-          <label class="block text-slate-700 font-bold">Prompt Image (Direct Upload or Image URL)</label>
+          <div class="flex items-center justify-between">
+            <label class="block text-slate-700 font-bold">Prompt Images / Output Samples *</label>
+            <span id="form-images-counter" class="text-[10px] font-bold text-slate-400">0 images added</span>
+          </div>
           <div class="space-y-2">
-            <input type="text" id="form-image-url" class="w-full px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs" placeholder="Paste image URL or choose file below" />
             <div class="flex items-center gap-2">
-              <input type="file" id="form-image-file" accept="image/*" onchange="handleUserImageUpload(this)" class="flex-1 text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border rounded-xl" />
-              <button type="button" onclick="uploadUserImageButton()" id="user-upload-img-btn" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center gap-1 shadow-sm">
-                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload
+              <input type="text" id="form-image-url" class="flex-1 px-3 py-2 border rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 text-xs" placeholder="Paste image URL and click Add, or choose files" />
+              <button type="button" onclick="addUserImageUrl()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition shrink-0 flex items-center gap-1">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add URL
               </button>
             </div>
-            <div id="form-image-preview" class="hidden pt-1">
-              <img id="form-preview-img" src="" alt="Prompt Image Preview" class="h-24 w-auto rounded-xl object-cover border border-slate-200 shadow-sm" />
+            <div class="flex items-center gap-2">
+              <input type="file" id="form-image-file" accept="image/*" multiple onchange="handleUserMultiImageUpload(this)" class="flex-1 text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border rounded-xl" />
+              <button type="button" onclick="uploadUserMultiImageButton()" id="user-upload-img-btn" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center gap-1 shadow-sm">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload Files
+              </button>
+            </div>
+            
+            <!-- Multi-Image Preview Gallery Grid -->
+            <div id="form-images-preview-grid" class="hidden grid grid-cols-3 sm:grid-cols-4 gap-2 pt-2 border-t border-slate-100">
+              <!-- Dynamically rendered image chips -->
             </div>
           </div>
-          <p class="text-[10px] text-slate-400">Choose an image from your device for instant cloud upload, or paste an existing web image URL.</p>
+          <p class="text-[10px] text-slate-400">Upload multiple example outputs or variations. The first image will be used as the primary cover.</p>
         </div>
 
         <div>
@@ -1383,19 +1416,29 @@
 
 
 
-  <!-- AUTH MODAL -->
+  <!-- AUTH MODAL (TABBED SIGN IN & SIGN UP) -->
   <div id="auth-modal" role="dialog" aria-modal="true" aria-labelledby="auth-title" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
     <div class="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-200 relative space-y-4">
       <button onclick="closeModal('auth-modal')" aria-label="Close sign in" class="absolute top-4 right-4 text-slate-400 hover:text-slate-600"><i data-lucide="x" class="w-5 h-5"></i></button>
       
       <div class="text-center space-y-1">
-        <h3 id="auth-title" class="text-xl font-bold">Welcome to PromptsOne</h3>
-        <p class="text-xs text-slate-500">Sign in to save prompts and access your cloud bookmarks</p>
+        <h3 id="auth-title" class="text-xl font-bold text-slate-900">Welcome to PromptsOne</h3>
+        <p id="auth-subtitle" class="text-xs text-slate-500">Sign in or register to bookmark and create AI prompts</p>
       </div>
 
-      <div class="space-y-3 pt-2">
-        <!-- Google Sign-In Button -->
-        <button onclick="handleGoogleSignIn()" class="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2">
+      <!-- Tab Switcher -->
+      <div class="grid grid-cols-2 p-1 bg-slate-100 rounded-2xl text-xs font-bold text-slate-600">
+        <button id="auth-tab-btn-login" type="button" onclick="switchAuthTab('login')" class="py-2 rounded-xl transition bg-white text-blue-600 shadow-sm">
+          Sign In
+        </button>
+        <button id="auth-tab-btn-signup" type="button" onclick="switchAuthTab('signup')" class="py-2 rounded-xl transition text-slate-600 hover:text-slate-900">
+          Create Account
+        </button>
+      </div>
+
+      <!-- Google 1-Click Auth Button -->
+      <div class="space-y-3 pt-1">
+        <button onclick="handleGoogleSignIn()" type="button" class="w-full py-2.5 px-4 bg-white hover:bg-slate-50 border border-slate-300 text-slate-700 font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-2">
           <svg class="w-4 h-4" viewBox="0 0 24 24">
             <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
             <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
@@ -1407,17 +1450,68 @@
 
         <div class="flex items-center gap-2 my-2">
           <div class="h-px bg-slate-200 flex-1"></div>
-          <span class="text-[10px] text-slate-400 font-bold uppercase">or email</span>
+          <span class="text-[10px] text-slate-400 font-bold uppercase">or with email</span>
           <div class="h-px bg-slate-200 flex-1"></div>
         </div>
 
-        <form onsubmit="handleEmailAuthSubmit(event)" class="space-y-3">
-          <input type="email" id="auth-email-input" placeholder="Email address" required class="w-full px-4 py-2.5 border rounded-xl text-xs font-medium" />
-          <input type="password" id="auth-password-input" placeholder="Password" required class="w-full px-4 py-2.5 border rounded-xl text-xs font-medium" />
-          <button type="submit" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition">
-            Continue with Email
+        <!-- In-Modal Alert Banner -->
+        <div id="auth-error-banner" class="hidden p-3 rounded-xl bg-rose-50 border border-rose-200 text-rose-700 text-xs font-semibold flex items-start gap-2">
+          <i data-lucide="alert-circle" class="w-4 h-4 text-rose-500 shrink-0 mt-0.5"></i>
+          <span id="auth-error-text" class="flex-1"></span>
+        </div>
+
+        <!-- TAB 1: SIGN IN FORM -->
+        <form id="auth-login-form" onsubmit="handleSignInSubmit(event)" class="space-y-3">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Email Address</label>
+            <input type="email" id="auth-login-email" placeholder="name@example.com" required class="w-full px-3.5 py-2.5 border rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Password</label>
+            <input type="password" id="auth-login-password" placeholder="••••••••" required class="w-full px-3.5 py-2.5 border rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <button type="submit" id="auth-login-btn" class="w-full py-2.5 bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+            <i data-lucide="log-in" class="w-3.5 h-3.5"></i> Sign In
           </button>
+          <div class="text-center pt-1">
+            <p class="text-xs text-slate-500">
+              Don't have an account? 
+              <button type="button" onclick="switchAuthTab('signup')" class="text-blue-600 font-bold hover:underline">Create Account</button>
+            </p>
+          </div>
         </form>
+
+        <!-- TAB 2: SIGN UP / REGISTER FORM -->
+        <form id="auth-signup-form" onsubmit="handleSignUpSubmit(event)" class="space-y-3 hidden">
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Full Name</label>
+            <input type="text" id="auth-signup-name" placeholder="John Doe" required class="w-full px-3.5 py-2.5 border rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div>
+            <label class="block text-[11px] font-bold text-slate-600 mb-1">Email Address</label>
+            <input type="email" id="auth-signup-email" placeholder="name@example.com" required class="w-full px-3.5 py-2.5 border rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500" />
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Password</label>
+              <input type="password" id="auth-signup-password" minlength="6" placeholder="Min 6 characters" required class="w-full px-3.5 py-2.5 border rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+            <div>
+              <label class="block text-[11px] font-bold text-slate-600 mb-1">Confirm Password</label>
+              <input type="password" id="auth-signup-confirm-password" minlength="6" placeholder="Repeat password" required class="w-full px-3.5 py-2.5 border rounded-xl text-xs font-medium focus:outline-none focus:ring-2 focus:ring-blue-500" />
+            </div>
+          </div>
+          <button type="submit" id="auth-signup-btn" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs rounded-xl shadow-sm transition flex items-center justify-center gap-1.5">
+            <i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Create Free Account
+          </button>
+          <div class="text-center pt-1">
+            <p class="text-xs text-slate-500">
+              Already have an account? 
+              <button type="button" onclick="switchAuthTab('login')" class="text-blue-600 font-bold hover:underline">Sign In</button>
+            </p>
+          </div>
+        </form>
+
       </div>
     </div>
   </div>

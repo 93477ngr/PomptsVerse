@@ -396,18 +396,24 @@
           </select>
         </div>
         <div>
-          <label class="block text-xs font-bold text-slate-700 mb-1">Image</label>
+          <div class="flex items-center justify-between mb-1">
+            <label class="block text-xs font-bold text-slate-700">Images / Output Variations *</label>
+            <span id="pf-images-counter" class="text-[10px] text-slate-400 font-bold">0 added</span>
+          </div>
           <div class="space-y-2">
-            <input type="text" id="pf-image-url" class="w-full px-3 py-2.5 border border-slate-200 rounded-xl text-sm focus:border-blue-500 transition" placeholder="Paste image URL or upload below" />
             <div class="flex items-center gap-2">
-              <input type="file" id="pf-image-file" accept="image/*" class="flex-1 text-xs text-slate-500 file:mr-2 file:py-2 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-slate-200 rounded-xl" />
-              <button type="button" onclick="uploadAdminImage()" id="upload-img-btn" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center gap-1">
-                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload
+              <input type="text" id="pf-image-url" class="flex-1 px-3 py-2 border border-slate-200 rounded-xl text-xs focus:border-blue-500 transition" placeholder="Paste image URL and click Add URL, or choose files" />
+              <button type="button" onclick="addAdminImageUrl()" class="px-3 py-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold rounded-xl transition shrink-0 flex items-center gap-1">
+                <i data-lucide="plus" class="w-3.5 h-3.5"></i> Add URL
               </button>
             </div>
-            <div id="pf-image-preview" class="hidden">
-              <img id="pf-preview-img" src="" alt="" class="h-24 rounded-xl object-cover border border-slate-200" />
+            <div class="flex items-center gap-2">
+              <input type="file" id="pf-image-file" accept="image/*" multiple onchange="uploadAdminImage(this)" class="flex-1 text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100 cursor-pointer border border-slate-200 rounded-xl" />
+              <button type="button" onclick="uploadAdminImageBtn()" id="upload-img-btn" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-xl transition shrink-0 flex items-center gap-1">
+                <i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload Files
+              </button>
             </div>
+            <div id="pf-images-preview-grid" class="hidden grid grid-cols-4 gap-2 pt-1"></div>
           </div>
         </div>
         <div>

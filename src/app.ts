@@ -14,6 +14,7 @@ import {
   signInWithPopup, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
+  updateProfile,
   signOut as firebaseSignOut, 
   onAuthStateChanged,
   User 
@@ -59,6 +60,7 @@ export interface PromptItem {
   tool: string;
   category: string;
   image: string;
+  images?: string[];         // Support for multiple example images/variations
   prompt: string;
   negative?: string;
   views: number;
@@ -836,39 +838,140 @@ async function loadSiteConfigs() {
   }
 }
 
+function isValidSocialLink(rawUrl: any): boolean {
+  if (!rawUrl || typeof rawUrl !== 'string') return false;
+  const url = rawUrl.trim();
+  if (!url) return false;
+
+  const lower = url.toLowerCase();
+  const dummyPlaceholders = [
+    'yourhandle',
+    'yourpage',
+    'yourchannel',
+    '@yourchannel',
+    '/username',
+    'yourprofile',
+    'yourorg',
+    'invitecode',
+    'promptsone',
+    '15550199',
+    'example.com'
+  ];
+  for (const placeholder of dummyPlaceholders) {
+    if (lower.includes(placeholder)) return false;
+  }
+
+  // Accept WhatsApp phone numbers (e.g. 9876543210 or +919876543210)
+  if (/^\+?[0-9]{7,15}$/.test(url.replace(/[\s-]/g, ''))) return true;
+  // Accept standard web URLs
+  if (lower.startsWith('http://') || lower.startsWith('https://') || lower.startsWith('wa.me/')) return true;
+  // Accept domain-style inputs without protocol
+  if (lower.includes('.com/') || lower.includes('.me/') || lower.includes('.gg/') || lower.includes('.org/')) return true;
+
+  return false;
+}
+
+function formatSocialUrl(key: string, rawVal: string): string {
+  let val = (rawVal || '').trim();
+  if (!val) return '';
+  if (key === 'whatsapp') {
+    if (val.startsWith('http://') || val.startsWith('https://')) return val;
+    const digits = val.replace(/[^0-9]/g, '');
+    if (digits) return `https://wa.me/${digits}`;
+    return '';
+  }
+  if (!val.startsWith('http://') && !val.startsWith('https://')) {
+    return `https://${val}`;
+  }
+  return val;
+}
+
 function renderFooterSocialLinks(data: any) {
   const container = document.getElementById('footer-social-links-container');
-  if (!container) return;
+  const contactContainer = document.getElementById('contact-page-social-links');
 
   const platforms = [
-    { key: 'instagram', label: 'Instagram', icon: 'instagram', color: 'hover:bg-[#E1306C]', defaultUrl: 'https://instagram.com/promptsone' },
-    { key: 'facebook', label: 'Facebook', icon: 'facebook', color: 'hover:bg-[#1877F2]', defaultUrl: 'https://facebook.com/promptsone' },
-    { key: 'youtube', label: 'YouTube', icon: 'youtube', color: 'hover:bg-[#FF0000]', defaultUrl: 'https://youtube.com/@promptsone' },
-    { key: 'twitter', label: 'Twitter/X', icon: 'twitter', color: 'hover:bg-slate-950', defaultUrl: 'https://x.com/promptsone' },
-    { key: 'linkedin', label: 'LinkedIn', icon: 'linkedin', color: 'hover:bg-[#0A66C2]', defaultUrl: 'https://linkedin.com/company/promptsone' },
-    { key: 'whatsapp', label: 'WhatsApp', icon: 'message-circle', color: 'hover:bg-[#25D366]', defaultUrl: 'https://wa.me/15550199' },
-    { key: 'telegram', label: 'Telegram', icon: 'send', color: 'hover:bg-[#229ED9]', defaultUrl: 'https://t.me/promptsone' },
-    { key: 'discord', label: 'Discord', icon: 'message-square', color: 'hover:bg-[#5865F2]', defaultUrl: 'https://discord.gg/promptverse' },
-    { key: 'github', label: 'GitHub', icon: 'github', color: 'hover:bg-[#333333]', defaultUrl: 'https://github.com/promptsone' },
-    { key: 'pinterest', label: 'Pinterest', icon: 'pin', color: 'hover:bg-[#E60023]', defaultUrl: 'https://pinterest.com/promptsone' },
+    {
+      key: 'instagram',
+      label: 'Instagram',
+      color: 'hover:bg-[#E1306C]',
+      svg: `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>`
+    },
+    {
+      key: 'facebook',
+      label: 'Facebook',
+      color: 'hover:bg-[#1877F2]',
+      svg: `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`
+    },
+    {
+      key: 'youtube',
+      label: 'YouTube',
+      color: 'hover:bg-[#FF0000]',
+      svg: `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/></svg>`
+    },
+    {
+      key: 'twitter',
+      label: 'Twitter / X',
+      color: 'hover:bg-slate-950',
+      svg: `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>`
+    },
+    {
+      key: 'linkedin',
+      label: 'LinkedIn',
+      color: 'hover:bg-[#0A66C2]',
+      svg: `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M19 3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h14m-.5 15.5v-5.3a3.26 3.26 0 0 0-3.26-3.26c-.85 0-1.84.52-2.28 1.3v-1.11h-2.79v8.37h2.79v-4.93c0-.77.62-1.4 1.39-1.4a1.4 1.4 0 0 1 1.4 1.4v4.93h2.75M6.88 8.56a1.68 1.68 0 0 0 1.68-1.68c0-.93-.75-1.69-1.68-1.69a1.69 1.69 0 0 0-1.69 1.69c0 .93.76 1.68 1.69 1.68m1.39 9.94v-8.37H5.5v8.37h2.77z"/></svg>`
+    },
+    {
+      key: 'whatsapp',
+      label: 'WhatsApp',
+      color: 'hover:bg-[#25D366]',
+      svg: `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.572-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>`
+    },
+    {
+      key: 'telegram',
+      label: 'Telegram',
+      color: 'hover:bg-[#229ED9]',
+      svg: `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.168.9-.499 1.201-.82 1.23-.696.065-1.225-.46-1.9-.902-1.056-.693-1.653-1.124-2.678-1.8-1.185-.78-.417-1.21.258-1.91.177-.184 3.247-2.977 3.307-3.23.007-.032.014-.15-.056-.212s-.174-.041-.249-.024c-.106.024-1.793 1.14-5.061 3.345-.48.33-.913.49-1.302.48-.428-.008-1.252-.241-1.865-.44-.752-.245-1.349-.374-1.297-.789.027-.216.325-.437.893-.663 3.498-1.524 5.831-2.529 6.998-3.014 3.332-1.386 4.025-1.627 4.476-1.635z"/></svg>`
+    },
+    {
+      key: 'discord',
+      label: 'Discord',
+      color: 'hover:bg-[#5865F2]',
+      svg: `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M20.317 4.37a19.791 19.791 0 0 0-4.885-1.515.074.074 0 0 0-.079.037c-.21.375-.444.864-.608 1.25a18.27 18.27 0 0 0-5.487 0 12.64 12.64 0 0 0-.617-1.25.077.077 0 0 0-.079-.037A19.736 19.736 0 0 0 3.677 4.37a.07.07 0 0 0-.032.027C.533 9.046-.32 13.58.099 18.057a.082.082 0 0 0 .031.057 19.9 19.9 0 0 0 5.993 3.03.078.078 0 0 0 .084-.028c.462-.63.874-1.295 1.226-1.994.021-.041.001-.09-.041-.106a13.107 13.107 0 0 1-1.872-.892.077.077 0 0 1-.008-.128 10.2 10.2 0 0 0 .372-.292.074.074 0 0 1 .077-.01c3.928 1.793 8.18 1.793 12.061 0a.074.074 0 0 1 .078.01c.12.098.246.198.373.292a.077.077 0 0 1-.006.127 12.299 12.299 0 0 1-1.873.892.077.077 0 0 0-.041.107c.36.698.772 1.362 1.225 1.993a.076.076 0 0 0 .084.028 19.839 19.839 0 0 0 6.002-3.03.077.077 0 0 0 .032-.054c.5-5.177-.838-9.674-3.549-13.66a.061.061 0 0 0-.031-.028zM8.02 15.33c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.956-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.956 2.418-2.157 2.418zm7.975 0c-1.183 0-2.157-1.085-2.157-2.419 0-1.333.955-2.419 2.157-2.419 1.21 0 2.176 1.096 2.157 2.42 0 1.333-.946 2.418-2.157 2.418z"/></svg>`
+    },
+    {
+      key: 'github',
+      label: 'GitHub',
+      color: 'hover:bg-[#333333]',
+      svg: `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0 0 24 12c0-6.63-5.37-12-12-12z"/></svg>`
+    },
+    {
+      key: 'pinterest',
+      label: 'Pinterest',
+      color: 'hover:bg-[#E60023]',
+      svg: `<svg class="w-4 h-4 fill-current" viewBox="0 0 24 24"><path d="M12 0C5.373 0 0 5.372 0 12c0 5.084 3.163 9.426 7.627 11.174-.105-.949-.2-2.405.042-3.441.218-.937 1.407-5.965 1.407-5.965s-.359-.719-.359-1.782c0-1.668.967-2.914 2.171-2.914 1.023 0 1.518.769 1.518 1.69 0 1.029-.655 2.568-.994 3.995-.283 1.194.599 2.169 1.777 2.169 2.133 0 3.772-2.249 3.772-5.495 0-2.873-2.064-4.882-5.012-4.882-3.414 0-5.418 2.561-5.418 5.207 0 1.031.397 2.138.893 2.738.098.119.112.224.083.345l-.333 1.36c-.053.22-.174.267-.402.161-1.499-.698-2.436-2.889-2.436-4.649 0-3.785 2.75-7.262 7.929-7.262 4.163 0 7.398 2.967 7.398 6.931 0 4.136-2.607 7.464-6.227 7.464-1.216 0-2.359-.631-2.75-1.378l-.748 2.853c-.271 1.043-1.002 2.35-1.492 3.146C9.57 23.812 10.763 24 12 24c6.627 0 12-5.373 12-12 0-6.628-5.373-12-12-12z"/></svg>`
+    }
   ];
 
   let html = '';
   platforms.forEach(p => {
-    const url = (data && data[p.key]) ? data[p.key].trim() : p.defaultUrl;
-    if (url) {
-      html += `
-        <a href="${url}" target="_blank" rel="noopener noreferrer" 
-           class="p-2 bg-slate-800 ${p.color} hover:text-white rounded-xl text-slate-400 transition flex items-center justify-center shadow-xs" 
-           aria-label="${p.label}" title="${p.label}">
-          <i data-lucide="${p.icon}" class="w-4 h-4"></i>
-        </a>
-      `;
+    const rawVal = data ? data[p.key] : null;
+    if (isValidSocialLink(rawVal)) {
+      const url = formatSocialUrl(p.key, rawVal);
+      if (url) {
+        html += `
+          <a href="${url}" target="_blank" rel="noopener noreferrer" 
+             class="p-2 bg-slate-800 ${p.color} hover:text-white rounded-xl text-slate-400 transition flex items-center justify-center shadow-xs" 
+             aria-label="${p.label}" title="${p.label}">
+            ${p.svg}
+          </a>
+        `;
+      }
     }
   });
 
-  container.innerHTML = html;
-  if (typeof lucide !== 'undefined') lucide.createIcons();
+  if (container) container.innerHTML = html;
+  if (contactContainer) contactContainer.innerHTML = html;
 }
 
 // Live listener for AI Tools collection
@@ -1188,13 +1291,12 @@ function renderTrendingPromptsUI(trendingList: PromptItem[]) {
   container.innerHTML = trendingList.map(p => `
     <div class="bg-white rounded-2xl border border-slate-200/80 shadow-card hover:shadow-card-hover transition duration-300 overflow-hidden group cursor-pointer flex flex-col justify-between" onclick="openPromptDetail('${p.id}')">
       <div>
-        <div class="relative w-full h-52 sm:h-56 overflow-hidden bg-slate-900 border-b border-slate-100 group/img flex items-center justify-center">
-          <img src="${optimizeImageUrl(p.image)}" alt="" class="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 pointer-events-none" />
+        <div class="relative w-full h-52 sm:h-56 overflow-hidden bg-[#f4f7f5] border-b border-[#dde8df] group/img">
           <img src="${optimizeImageUrl(p.image)}" alt="${p.title}" 
-               class="relative z-10 w-full h-full object-cover object-top block group-hover/img:scale-105 transition-transform duration-500 opacity-0" 
+               class="w-full h-full object-cover object-center block group-hover/img:scale-105 transition-transform duration-500 opacity-0" 
                loading="lazy" 
                onload="this.classList.remove('opacity-0');"
-               onerror="this.style.display='none';" />
+               onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'; this.classList.remove('opacity-0');" />
           <span class="absolute top-2 left-2 z-20 px-2.5 py-0.5 rounded-md bg-white/90 backdrop-blur-md text-slate-900 font-bold text-[10px] shadow-sm">
             ${p.tool}
           </span>
@@ -1396,7 +1498,6 @@ function renderAuthUI() {
     const name = formatUserDisplayName(currentUser);
     const avatarLetter = name.charAt(0).toUpperCase();
     const photoURL = currentUser.photoURL;
-    const isAdmin = currentUserRole === 'admin' || ADMIN_EMAILS.includes((currentUser.email || '').toLowerCase());
 
     if (authContainer) {
       authContainer.innerHTML = `
@@ -1412,7 +1513,6 @@ function renderAuthUI() {
                 : `<div class="w-6 h-6 rounded-full bg-gradient-to-tr from-blue-600 to-indigo-600 text-white flex items-center justify-center text-[10px] font-extrabold shrink-0 shadow-sm">${avatarLetter}</div>`
               }
               <span class="max-w-[90px] sm:max-w-[120px] truncate text-slate-900 font-bold">${name}</span>
-              ${isAdmin ? `<span class="px-1.5 py-0.5 rounded-full text-[9px] font-extrabold bg-purple-100 text-purple-700">Admin</span>` : ''}
               <i data-lucide="chevron-down" class="w-3.5 h-3.5 text-slate-400"></i>
             </button>
 
@@ -1435,11 +1535,6 @@ function renderAuthUI() {
                 <button onclick="openAddPromptModal(); closeUserDropdownMenu()" class="w-full text-left px-3 py-2 rounded-xl text-slate-700 hover:bg-slate-50 flex items-center gap-2 transition">
                   <i data-lucide="plus-circle" class="w-4 h-4 text-emerald-600"></i> Submit New Prompt
                 </button>
-                ${isAdmin ? `
-                  <a href="/admin.html" target="_blank" class="w-full text-left px-3 py-2 rounded-xl text-purple-700 hover:bg-purple-50 flex items-center gap-2 transition">
-                    <i data-lucide="shield" class="w-4 h-4 text-purple-600"></i> Admin Control Panel
-                  </a>
-                ` : ''}
               </div>
 
               <div class="p-1 pt-1.5 border-t border-slate-100">
@@ -1463,7 +1558,6 @@ function renderAuthUI() {
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-1.5">
                 <span class="text-xs font-bold text-slate-900 truncate">${name}</span>
-                ${isAdmin ? `<span class="px-1.5 py-0.2 rounded-full text-[9px] font-extrabold bg-purple-100 text-purple-700">Admin</span>` : ''}
               </div>
               <p class="text-[10px] text-slate-400 font-medium truncate">${currentUser.email || 'Verified Creator'}</p>
             </div>
@@ -1476,11 +1570,6 @@ function renderAuthUI() {
               <i data-lucide="plus" class="w-3.5 h-3.5"></i> Submit
             </button>
           </div>
-          ${isAdmin ? `
-            <a href="/admin.html" target="_blank" class="w-full py-2 bg-purple-50 text-purple-700 border border-purple-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5">
-              <i data-lucide="shield" class="w-3.5 h-3.5"></i> Admin Control Panel
-            </a>
-          ` : ''}
           <button onclick="handleUserLogout(); toggleMobileMenu()" class="w-full py-2 text-rose-600 hover:bg-rose-50 rounded-xl text-xs font-semibold flex items-center justify-center gap-1.5 transition border border-rose-100">
             <i data-lucide="log-out" class="w-3.5 h-3.5"></i> Sign Out
           </button>
@@ -1726,6 +1815,90 @@ async function loadUserPrompts() {
   }
 }
 
+let userFormImages: string[] = [];
+
+function renderUserFormImages() {
+  const grid = document.getElementById('form-images-preview-grid');
+  const counter = document.getElementById('form-images-counter');
+  if (counter) {
+    counter.textContent = `${userFormImages.length} image${userFormImages.length !== 1 ? 's' : ''} added`;
+  }
+  if (!grid) return;
+  if (userFormImages.length === 0) {
+    grid.innerHTML = '';
+    grid.classList.add('hidden');
+    return;
+  }
+  grid.classList.remove('hidden');
+  grid.innerHTML = userFormImages.map((img, idx) => `
+    <div class="relative group rounded-xl overflow-hidden border border-slate-200 bg-slate-900 aspect-square flex items-center justify-center p-1">
+      <img src="${img}" alt="Preview ${idx + 1}" class="max-w-full max-h-full object-contain" />
+      <button type="button" onclick="removeUserFormImage(${idx})" class="absolute top-1 right-1 w-5 h-5 rounded-full bg-rose-600 hover:bg-rose-700 text-white flex items-center justify-center text-[10px] shadow transition" title="Remove image">
+        <i data-lucide="x" class="w-3 h-3"></i>
+      </button>
+      ${idx === 0 ? `<span class="absolute bottom-1 left-1 px-1.5 py-0.5 rounded bg-blue-600 text-white text-[9px] font-bold">Cover</span>` : ''}
+    </div>
+  `).join('');
+  if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function removeUserFormImage(idx: number) {
+  if (idx >= 0 && idx < userFormImages.length) {
+    userFormImages.splice(idx, 1);
+    renderUserFormImages();
+  }
+}
+
+function addUserImageUrl() {
+  const urlInput = document.getElementById('form-image-url') as HTMLInputElement;
+  const url = urlInput ? urlInput.value.trim() : '';
+  if (!url) {
+    showToast('Please enter an image URL first');
+    return;
+  }
+  userFormImages.push(url);
+  urlInput.value = '';
+  renderUserFormImages();
+  showToast('Image URL added!');
+}
+
+async function handleUserMultiImageUpload(input: HTMLInputElement) {
+  if (!input.files || input.files.length === 0) return;
+  const files = Array.from(input.files);
+  const btn = document.getElementById('user-upload-img-btn') as HTMLButtonElement;
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Uploading...';
+  }
+  showToast(`Uploading ${files.length} image(s)...`, 'info');
+  try {
+    for (let i = 0; i < files.length; i++) {
+      const url = await uploadToCloudinary(files[i]);
+      if (url) userFormImages.push(url);
+    }
+    input.value = '';
+    renderUserFormImages();
+    showToast(`${files.length} image(s) uploaded successfully!`, 'success');
+  } catch (err: any) {
+    showToast(`Upload error: ${err.message}`, 'error');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload Files';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+  }
+}
+
+function uploadUserMultiImageButton() {
+  const fileInput = document.getElementById('form-image-file') as HTMLInputElement;
+  if (!fileInput || !fileInput.files || fileInput.files.length === 0) {
+    showToast('Please select image files first');
+    return;
+  }
+  handleUserMultiImageUpload(fileInput);
+}
+
 function openAddPromptModal() {
   const modal = document.getElementById('add-prompt-modal');
   if (modal) {
@@ -1736,10 +1909,8 @@ function openAddPromptModal() {
     if (idInput) idInput.value = '';
     const titleEl = document.getElementById('add-modal-title');
     if (titleEl) titleEl.innerText = 'Create New Prompt';
-    const previewContainer = document.getElementById('form-image-preview');
-    if (previewContainer) previewContainer.classList.add('hidden');
-    const previewImg = document.getElementById('form-preview-img') as HTMLImageElement;
-    if (previewImg) previewImg.src = '';
+    userFormImages = [];
+    renderUserFormImages();
     populateFormCategoryOptions();
     if (typeof lucide !== 'undefined') lucide.createIcons();
   }
@@ -1773,7 +1944,10 @@ async function handleSavePromptForm(e: Event) {
   const title = (document.getElementById('form-title') as HTMLInputElement)?.value.trim() || '';
   const tool = (document.getElementById('form-tool') as HTMLSelectElement)?.value || 'ChatGPT';
   const category = (document.getElementById('form-category') as HTMLSelectElement)?.value || 'AI Art';
-  let image = (document.getElementById('form-image-url') as HTMLInputElement)?.value.trim() || '';
+  let manualUrl = (document.getElementById('form-image-url') as HTMLInputElement)?.value.trim() || '';
+  if (manualUrl && !userFormImages.includes(manualUrl)) {
+    userFormImages.push(manualUrl);
+  }
   const promptText = (document.getElementById('form-prompt-text') as HTMLTextAreaElement)?.value.trim() || '';
   const negative = (document.getElementById('form-negative-prompt') as HTMLTextAreaElement)?.value.trim() || '';
   const tagsRaw = (document.getElementById('form-tags') as HTMLInputElement)?.value.trim() || '';
@@ -1787,19 +1961,14 @@ async function handleSavePromptForm(e: Event) {
     return;
   }
 
-  // Upload image file to Cloudinary if file was selected
+  // Upload image file to Cloudinary if file was selected and not yet uploaded
   const fileInput = document.getElementById('form-image-file') as HTMLInputElement;
-  if (fileInput?.files?.[0]) {
+  if (fileInput?.files && fileInput.files.length > 0 && userFormImages.length === 0) {
     try {
-      showToast('Uploading prompt image...', 'info');
-      image = await uploadToCloudinary(fileInput.files[0]);
-      const imgUrlInput = document.getElementById('form-image-url') as HTMLInputElement;
-      if (imgUrlInput) imgUrlInput.value = image;
-      const previewContainer = document.getElementById('form-image-preview');
-      const previewImg = document.getElementById('form-preview-img') as HTMLImageElement;
-      if (previewContainer && previewImg) {
-        previewImg.src = image;
-        previewContainer.classList.remove('hidden');
+      showToast('Uploading prompt images...', 'info');
+      for (let i = 0; i < fileInput.files.length; i++) {
+        const uploadedUrl = await uploadToCloudinary(fileInput.files[i]);
+        if (uploadedUrl) userFormImages.push(uploadedUrl);
       }
     } catch (err: any) {
       showToast(`Image upload failed: ${err.message}`, 'error');
@@ -1808,19 +1977,27 @@ async function handleSavePromptForm(e: Event) {
     }
   }
 
+  const finalImages = [...userFormImages];
+  const primaryImage = finalImages[0] || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80';
   const status = (currentUserRole === 'admin' || user.email === 'gangareddynaredla24925@gmail.com' || user.email === 'localride369@gmail.com') ? 'approved' : 'pending';
 
   try {
     if (id) {
       await updateDoc(doc(db, 'prompts', id), {
-        title, tool, category, image, prompt: promptText, negative, tags, featured, trending,
+        title, tool, category,
+        image: primaryImage,
+        images: finalImages,
+        prompt: promptText, negative, tags, featured, trending,
         updatedAt: serverTimestamp()
       });
       showToast('Prompt updated successfully!');
     } else {
       try {
         await addDoc(collection(db, 'prompts'), {
-          title, tool, category, image, prompt: promptText, negative, tags, featured, trending,
+          title, tool, category,
+          image: primaryImage,
+          images: finalImages,
+          prompt: promptText, negative, tags, featured, trending,
           status,
           views: 0, likes: 0, downloads: 0, copyCount: 0,
           creator: user.displayName || user.email?.split('@')[0] || 'PromptVerse Creator',
@@ -1830,10 +2007,12 @@ async function handleSavePromptForm(e: Event) {
         });
         showToast(status === 'approved' ? 'Prompt published!' : 'Prompt submitted for review!');
       } catch (innerErr: any) {
-        // If status was 'approved' and failed due to firestore rules, retry with 'pending'
         if (status === 'approved' && innerErr?.message?.toLowerCase().includes('permission')) {
           await addDoc(collection(db, 'prompts'), {
-            title, tool, category, image, prompt: promptText, negative, tags, featured, trending,
+            title, tool, category,
+            image: primaryImage,
+            images: finalImages,
+            prompt: promptText, negative, tags, featured, trending,
             status: 'pending',
             views: 0, likes: 0, downloads: 0, copyCount: 0,
             creator: user.displayName || user.email?.split('@')[0] || 'PromptVerse Creator',
@@ -1861,46 +2040,6 @@ async function handleSavePromptForm(e: Event) {
   }
 }
 
-async function handleUserImageUpload(input: HTMLInputElement) {
-  if (!input.files || !input.files[0]) return;
-  const file = input.files[0];
-  const btn = document.getElementById('user-upload-img-btn') as HTMLButtonElement;
-  if (btn) {
-    btn.disabled = true;
-    btn.innerHTML = '<svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Uploading...';
-  }
-  showToast('Uploading image...', 'info');
-  try {
-    const url = await uploadToCloudinary(file);
-    const imgUrlInput = document.getElementById('form-image-url') as HTMLInputElement;
-    if (imgUrlInput) imgUrlInput.value = url;
-    const previewContainer = document.getElementById('form-image-preview');
-    const previewImg = document.getElementById('form-preview-img') as HTMLImageElement;
-    if (previewContainer && previewImg) {
-      previewImg.src = url;
-      previewContainer.classList.remove('hidden');
-    }
-    showToast('Image uploaded successfully!', 'success');
-  } catch (err: any) {
-    showToast(`Upload failed: ${err.message}`, 'error');
-  } finally {
-    if (btn) {
-      btn.disabled = false;
-      btn.innerHTML = '<i data-lucide="upload" class="w-3.5 h-3.5"></i> Upload';
-      if (typeof lucide !== 'undefined') lucide.createIcons();
-    }
-  }
-}
-
-function uploadUserImageButton() {
-  const fileInput = document.getElementById('form-image-file') as HTMLInputElement;
-  if (!fileInput || !fileInput.files || !fileInput.files[0]) {
-    showToast('Please select an image file first');
-    return;
-  }
-  handleUserImageUpload(fileInput);
-}
-
 function editUserPrompt(id: string) {
   const p = userPrompts.find(x => x.id === id);
   if (!p) return;
@@ -1912,19 +2051,15 @@ function editUserPrompt(id: string) {
   (document.getElementById('form-title') as HTMLInputElement).value = p.title || '';
   (document.getElementById('form-tool') as HTMLSelectElement).value = p.tool || 'ChatGPT';
   (document.getElementById('form-category') as HTMLSelectElement).value = p.category || '';
-  (document.getElementById('form-image-url') as HTMLInputElement).value = p.image || '';
+  (document.getElementById('form-image-url') as HTMLInputElement).value = '';
   (document.getElementById('form-prompt-text') as HTMLTextAreaElement).value = p.prompt || '';
   (document.getElementById('form-negative-prompt') as HTMLTextAreaElement).value = p.negative || '';
   (document.getElementById('form-tags') as HTMLInputElement).value = (p.tags || []).join(', ');
 
-  const preview = document.getElementById('form-image-preview');
-  const previewImg = document.getElementById('form-preview-img') as HTMLImageElement;
-  if (p.image && preview && previewImg) {
-    previewImg.src = p.image;
-    preview.classList.remove('hidden');
-  } else if (preview) {
-    preview.classList.add('hidden');
-  }
+  userFormImages = (p.images && Array.isArray(p.images) && p.images.length > 0)
+    ? [...p.images]
+    : (p.image ? [p.image] : []);
+  renderUserFormImages();
 }
 
 function deleteUserPromptConfirm(id: string) {
@@ -2460,17 +2595,17 @@ function createPromptCardHTML(p: PromptItem): string {
   const imgUrl = optimizeImageUrl(p.image);
   const creatorClean = (p.creator || 'Creator').replace(/\d+$/, '').replace(/[._-]+/g, ' ');
   const creatorDisplay = creatorClean.charAt(0).toUpperCase() + creatorClean.slice(1).toLowerCase();
+  const imageCount = (p.images && Array.isArray(p.images) && p.images.length > 0) ? p.images.length : (p.image ? 1 : 0);
 
   return `
     <div class="bg-white rounded-2xl border border-[#dde8df] shadow-card hover:shadow-card-hover hover:-translate-y-1 transition duration-300 overflow-hidden group flex flex-col justify-between cursor-pointer" onclick="openPromptDetail('${p.id}')">
       <div>
-        <div class="relative w-full h-56 sm:h-64 overflow-hidden bg-slate-900 border-b border-[#dde8df] group/img flex items-center justify-center">
-          <img src="${imgUrl}" alt="" class="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 pointer-events-none" />
+        <div class="relative w-full h-56 sm:h-64 overflow-hidden bg-[#f4f7f5] border-b border-[#dde8df] group/img">
           <img src="${imgUrl}" alt="${p.title}" 
-               class="relative z-10 w-full h-full object-cover object-top block group-hover/img:scale-105 transition-transform duration-500 opacity-0" 
+               class="w-full h-full object-cover object-center block group-hover/img:scale-105 transition-transform duration-500 opacity-0" 
                loading="lazy" 
                onload="this.classList.remove('opacity-0');"
-               onerror="this.style.display='none';" />
+               onerror="this.src='https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?auto=format&fit=crop&w=600&q=80'; this.classList.remove('opacity-0');" />
           <div class="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 flex-wrap">
             <span class="px-2 py-0.5 rounded-md bg-black/70 text-white font-bold text-[10px] backdrop-blur-md border border-white/10 shadow-sm flex items-center gap-1">
               <span class="w-1.5 h-1.5 rounded-full bg-[#f5c518] animate-pulse"></span> ${p.tool}
@@ -2482,6 +2617,11 @@ function createPromptCardHTML(p: PromptItem): string {
           <button onclick="event.stopPropagation(); toggleBookmarkCard('${p.id}', event)" class="absolute top-2.5 right-2.5 z-20 p-1.5 rounded-lg bg-white/90 hover:bg-white text-slate-700 shadow-sm transition backdrop-blur-sm" title="Bookmark Prompt">
             <i data-lucide="bookmark" class="w-3.5 h-3.5 ${isBookmarked ? 'text-[#f5c518] fill-[#f5c518]' : 'text-slate-400'}"></i>
           </button>
+          ${imageCount > 1 ? `
+            <div class="absolute bottom-2.5 right-2.5 z-20 px-2 py-0.5 rounded-md bg-black/75 text-white font-extrabold text-[10px] backdrop-blur-md border border-white/10 flex items-center gap-1 shadow-sm">
+              <i data-lucide="layers" class="w-3 h-3 text-[#f5c518]"></i> ${imageCount}
+            </div>
+          ` : ''}
         </div>
         <div class="p-3.5 space-y-2.5">
           <h3 class="font-bold text-xs text-[#1a2e1e] line-clamp-1 group-hover:text-[#2d8a45] transition tracking-tight">${p.title}</h3>
@@ -2680,8 +2820,72 @@ async function filterBySort(sortType: string) {
 }
 
 // =============================================================================
-// PROMPT DETAIL PAGE
+// PROMPT DETAIL PAGE & MULTI-IMAGE CAROUSEL
 // =============================================================================
+
+let currentDetailImages: string[] = [];
+let currentDetailImageIndex = 0;
+
+function updateDetailCarouselDisplay() {
+  if (currentDetailImages.length === 0) return;
+  const currentImg = optimizeImageUrl(currentDetailImages[currentDetailImageIndex] || currentDetailImages[0]);
+  const setSrc = (id: string, src: string) => { const el = document.getElementById(id) as HTMLImageElement; if (el) el.src = src; };
+  setSrc('detail-image', currentImg);
+  setSrc('detail-image-bg', currentImg);
+
+  const prevBtn = document.getElementById('carousel-prev-btn');
+  const nextBtn = document.getElementById('carousel-next-btn');
+  const counterEl = document.getElementById('detail-carousel-counter');
+  const thumbsContainer = document.getElementById('detail-carousel-thumbs');
+
+  if (currentDetailImages.length > 1) {
+    if (prevBtn) prevBtn.classList.remove('hidden');
+    if (nextBtn) nextBtn.classList.remove('hidden');
+    if (counterEl) {
+      counterEl.classList.remove('hidden');
+      counterEl.textContent = `${currentDetailImageIndex + 1} / ${currentDetailImages.length}`;
+    }
+    if (thumbsContainer) {
+      thumbsContainer.innerHTML = currentDetailImages.map((img, idx) => `
+        <button type="button" onclick="setDetailImageIndex(${idx})" class="w-12 h-12 rounded-xl overflow-hidden border-2 transition shrink-0 ${idx === currentDetailImageIndex ? 'border-[#2d8a45] shadow-md scale-105' : 'border-slate-200 opacity-60 hover:opacity-100'}">
+          <img src="${optimizeImageUrl(img)}" alt="Thumb ${idx + 1}" class="w-full h-full object-cover" />
+        </button>
+      `).join('');
+    }
+  } else {
+    if (prevBtn) prevBtn.classList.add('hidden');
+    if (nextBtn) nextBtn.classList.add('hidden');
+    if (counterEl) counterEl.classList.add('hidden');
+    if (thumbsContainer) thumbsContainer.innerHTML = '';
+  }
+}
+
+function prevDetailImage(e?: Event) {
+  if (e) e.stopPropagation();
+  if (currentDetailImages.length <= 1) return;
+  currentDetailImageIndex = (currentDetailImageIndex - 1 + currentDetailImages.length) % currentDetailImages.length;
+  updateDetailCarouselDisplay();
+}
+
+function nextDetailImage(e?: Event) {
+  if (e) e.stopPropagation();
+  if (currentDetailImages.length <= 1) return;
+  currentDetailImageIndex = (currentDetailImageIndex + 1) % currentDetailImages.length;
+  updateDetailCarouselDisplay();
+}
+
+function setDetailImageIndex(idx: number) {
+  if (idx < 0 || idx >= currentDetailImages.length) return;
+  currentDetailImageIndex = idx;
+  updateDetailCarouselDisplay();
+}
+
+function openCurrentFullscreenImage() {
+  const currentImg = currentDetailImages[currentDetailImageIndex] || currentDetailImages[0];
+  if (currentImg) {
+    window.open(currentImg, '_blank');
+  }
+}
 
 async function openPromptDetail(id: string, updateHash = true) {
   // Look up in cache first (fast path)
@@ -2754,15 +2958,20 @@ async function openPromptDetail(id: string, updateHash = true) {
     "url": promptUrl
   });
 
+  // Setup multi-image gallery state
+  const allImages = (p.images && Array.isArray(p.images) && p.images.length > 0)
+    ? p.images.filter(Boolean)
+    : (p.image ? [p.image] : []);
+  currentDetailImages = allImages;
+  currentDetailImageIndex = 0;
+  updateDetailCarouselDisplay();
+
   // Populate all detail page elements
   const set = (id: string, val: string) => { const el = document.getElementById(id); if (el) el.innerText = val; };
   const setHTML = (id: string, val: string) => { const el = document.getElementById(id); if (el) el.innerHTML = val; };
-  const setSrc = (id: string, src: string) => { const el = document.getElementById(id) as HTMLImageElement; if (el) el.src = src; };
 
   set('detail-breadcrumb-category', p.category);
   set('detail-breadcrumb-title', p.title);
-  setSrc('detail-image', p.image);
-  setSrc('detail-image-bg', p.image);
   set('detail-tool-text', p.tool);
   set('detail-category-badge', p.category);
   set('detail-title', p.title);
@@ -2793,18 +3002,18 @@ async function openPromptDetail(id: string, updateHash = true) {
   set('detail-char-count', `${p.prompt.length} chars`);
   set('detail-negative-text', p.negative || 'blurry, distorted facial features, low resolution, bad anatomy, cropped limbs, text watermark, draft quality, overexposed noise');
 
-  // Output samples — show complete uncropped image
+  // Output samples — render all available image variations with full uncropped fit
   const outputSamplesEl = document.getElementById('detail-output-samples');
   if (outputSamplesEl) {
-    const imgUrl = optimizeImageUrl(p.image);
-    if (imgUrl) {
-      outputSamplesEl.innerHTML = `
-        <div class="group relative rounded-2xl overflow-hidden bg-slate-950 shadow-sm col-span-full h-80 flex items-center justify-center">
-          <img src="${imgUrl}" alt="" class="absolute inset-0 w-full h-full object-cover blur-xl opacity-30 pointer-events-none" />
-          <img src="${imgUrl}" alt="${p.title}" class="relative z-10 max-w-full max-h-full object-contain p-2 group-hover:scale-[1.02] transition duration-500" loading="lazy" />
-          <span class="absolute bottom-2 left-2 z-20 px-2 py-0.5 rounded bg-black/60 text-white text-[10px] font-bold backdrop-blur-md">Sample Output</span>
+    if (currentDetailImages.length > 0) {
+      outputSamplesEl.innerHTML = currentDetailImages.map((img, idx) => `
+        <div onclick="setDetailImageIndex(${idx})" class="group relative rounded-2xl overflow-hidden bg-[#f4f7f5] shadow-sm h-64 sm:h-72 cursor-pointer border-2 transition ${idx === currentDetailImageIndex ? 'border-[#2d8a45] shadow-md scale-[1.01]' : 'border-[#dde8df] hover:border-[#2d8a45]/50'}">
+          <img src="${optimizeImageUrl(img)}" alt="${p.title} variation ${idx + 1}" class="w-full h-full object-cover object-center group-hover:scale-105 transition duration-500" loading="lazy" />
+          <span class="absolute bottom-2 left-2 z-20 px-2.5 py-0.5 rounded-md bg-black/75 text-white text-[10px] font-bold backdrop-blur-md border border-white/10 flex items-center gap-1">
+            <i data-lucide="image" class="w-3 h-3 text-[#f5c518]"></i> Variation ${idx + 1}
+          </span>
         </div>
-      `;
+      `).join('');
     } else {
       outputSamplesEl.innerHTML = `
         <div class="col-span-full rounded-2xl bg-slate-100 aspect-square flex items-center justify-center text-slate-300">
@@ -2983,47 +3192,217 @@ function populateFormCategoryOptions() {
 // AUTH HANDLERS
 // =============================================================================
 
-function openAuthModal(type: 'login' | 'signup') {
+function showAuthError(msg: string) {
+  const banner = document.getElementById('auth-error-banner');
+  const txt = document.getElementById('auth-error-text');
+  if (banner && txt) {
+    txt.textContent = msg;
+    banner.classList.remove('hidden');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+  }
+  showToast(msg, 'error');
+}
+
+function clearAuthError() {
+  const banner = document.getElementById('auth-error-banner');
+  if (banner) banner.classList.add('hidden');
+}
+
+function switchAuthTab(tab: 'login' | 'signup') {
+  clearAuthError();
+  const loginBtn = document.getElementById('auth-tab-btn-login');
+  const signupBtn = document.getElementById('auth-tab-btn-signup');
+  const loginForm = document.getElementById('auth-login-form');
+  const signupForm = document.getElementById('auth-signup-form');
+  const title = document.getElementById('auth-title');
+  const subtitle = document.getElementById('auth-subtitle');
+
+  if (tab === 'login') {
+    if (loginBtn) {
+      loginBtn.className = 'py-2 rounded-xl transition bg-white text-blue-600 shadow-sm';
+    }
+    if (signupBtn) {
+      signupBtn.className = 'py-2 rounded-xl transition text-slate-600 hover:text-slate-900';
+    }
+    if (loginForm) loginForm.classList.remove('hidden');
+    if (signupForm) signupForm.classList.add('hidden');
+    if (title) title.innerText = 'Welcome Back to PromptsOne';
+    if (subtitle) subtitle.innerText = 'Sign in to access your saved prompts & bookmarks';
+  } else {
+    if (signupBtn) {
+      signupBtn.className = 'py-2 rounded-xl transition bg-white text-emerald-600 shadow-sm';
+    }
+    if (loginBtn) {
+      loginBtn.className = 'py-2 rounded-xl transition text-slate-600 hover:text-slate-900';
+    }
+    if (signupForm) signupForm.classList.remove('hidden');
+    if (loginForm) loginForm.classList.add('hidden');
+    if (title) title.innerText = 'Create Free Account';
+    if (subtitle) subtitle.innerText = 'Register with your name, email & password in seconds';
+  }
+}
+
+function openAuthModal(type: 'login' | 'signup' = 'login') {
+  clearAuthError();
   const modal = document.getElementById('auth-modal');
   if (modal) modal.classList.remove('hidden');
-  const title = document.getElementById('auth-title');
-  if (title) title.innerText = type === 'login' ? 'Login to PromptVerse' : 'Create Free Account';
+  switchAuthTab(type);
+  if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
 async function handleGoogleSignIn() {
+  clearAuthError();
   try {
-    showToast('Connecting with Google...');
+    showToast('Connecting with Google...', 'info');
     await signInWithPopup(auth, googleProvider);
     closeModal('auth-modal');
     showToast('Signed in with Google!');
   } catch (error: any) {
-    console.error('Google Sign-In Error:', error);
-    showToast(`Google Sign-In failed: ${error.message || error}`);
+    showAuthError(`Google Sign-In: ${error.message || error}`);
   }
 }
 
-async function handleEmailAuthSubmit(e: Event) {
+async function handleSignInSubmit(e: Event) {
   e.preventDefault();
-  const emailInput = document.getElementById('auth-email-input') as HTMLInputElement;
-  const passInput = document.getElementById('auth-password-input') as HTMLInputElement;
+  clearAuthError();
+
+  const emailInput = document.getElementById('auth-login-email') as HTMLInputElement;
+  const passInput = document.getElementById('auth-login-password') as HTMLInputElement;
+  const btn = document.getElementById('auth-login-btn') as HTMLButtonElement;
+
   const email = emailInput ? emailInput.value.trim() : '';
   const password = passInput ? passInput.value : '';
-  if (!email || !password) { showToast('Please enter email and password'); return; }
+
+  if (!email || !password) {
+    showAuthError('Please enter both your email address and password');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Signing In...';
+  }
+
   try {
     try {
       await signInWithEmailAndPassword(auth, email, password);
-      showToast('Logged in successfully!');
+      showToast('Welcome back! Signed in successfully.');
+      closeModal('auth-modal');
+      return;
     } catch (loginErr: any) {
-      if (loginErr.code === 'auth/user-not-found' || loginErr.code === 'auth/invalid-credential') {
-        await createUserWithEmailAndPassword(auth, email, password);
-        showToast('Account created and logged in!');
-      } else { throw loginErr; }
+      // If user not found or invalid credential, seamlessly try auto-creating account if password is valid
+      if (loginErr.code === 'auth/invalid-credential' || loginErr.code === 'auth/user-not-found') {
+        if (password.length >= 6) {
+          try {
+            const cred = await createUserWithEmailAndPassword(auth, email, password);
+            const derivedName = email.split('@')[0].replace(/[._-]+/g, ' ');
+            const formattedName = derivedName.charAt(0).toUpperCase() + derivedName.slice(1);
+            try {
+              await updateProfile(cred.user, { displayName: formattedName });
+              await syncUserDoc(cred.user);
+            } catch (_) {}
+            showToast(`Welcome! Account created for ${email}`, 'success');
+            closeModal('auth-modal');
+            return;
+          } catch (autoCreateErr: any) {
+            // If email already in use, then password was indeed incorrect for existing account
+            if (autoCreateErr.code === 'auth/email-already-in-use') {
+              showAuthError('Incorrect password for this account. Please verify your password or sign in with Google.');
+              return;
+            }
+            throw autoCreateErr;
+          }
+        } else {
+          showAuthError('Invalid credentials. Password must be at least 6 characters.');
+          return;
+        }
+      } else if (loginErr.code === 'auth/wrong-password') {
+        showAuthError('Incorrect password for this account. Please re-enter your password.');
+        return;
+      } else if (loginErr.code === 'auth/too-many-requests') {
+        showAuthError('Too many failed attempts. Please wait a minute or continue with Google.');
+        return;
+      } else {
+        throw loginErr;
+      }
     }
+  } catch (err: any) {
+    showAuthError(err.message || 'Unable to sign in. Please check your credentials or try Google Sign-In.');
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="log-in" class="w-3.5 h-3.5"></i> Sign In';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
+  }
+}
+
+async function handleSignUpSubmit(e: Event) {
+  e.preventDefault();
+  clearAuthError();
+
+  const nameInput = document.getElementById('auth-signup-name') as HTMLInputElement;
+  const emailInput = document.getElementById('auth-signup-email') as HTMLInputElement;
+  const passInput = document.getElementById('auth-signup-password') as HTMLInputElement;
+  const confirmInput = document.getElementById('auth-signup-confirm-password') as HTMLInputElement;
+  const btn = document.getElementById('auth-signup-btn') as HTMLButtonElement;
+
+  const fullName = nameInput ? nameInput.value.trim() : '';
+  const email = emailInput ? emailInput.value.trim() : '';
+  const password = passInput ? passInput.value : '';
+  const confirmPass = confirmInput ? confirmInput.value : '';
+
+  if (!fullName) {
+    showAuthError('Please enter your full name');
+    return;
+  }
+  if (!email || !password) {
+    showAuthError('Please enter your email and password');
+    return;
+  }
+  if (password.length < 6) {
+    showAuthError('Password must be at least 6 characters long');
+    return;
+  }
+  if (password !== confirmPass) {
+    showAuthError('Passwords do not match. Please verify your password confirmation.');
+    return;
+  }
+
+  if (btn) {
+    btn.disabled = true;
+    btn.innerHTML = '<svg class="animate-spin w-3.5 h-3.5" fill="none" viewBox="0 0 24 24"><circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle><path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path></svg> Creating Account...';
+  }
+
+  try {
+    const cred = await createUserWithEmailAndPassword(auth, email, password);
+    try {
+      await updateProfile(cred.user, { displayName: fullName });
+      await syncUserDoc(cred.user);
+    } catch (_) {}
+    showToast(`Account created! Welcome, ${fullName}!`, 'success');
     closeModal('auth-modal');
   } catch (err: any) {
-    console.error('Authentication Error:', err);
-    showToast(`Authentication failed: ${err.message || err}`);
+    if (err.code === 'auth/email-already-in-use') {
+      showAuthError('An account already exists with this email. Please switch to "Sign In".');
+      switchAuthTab('login');
+      const loginEmail = document.getElementById('auth-login-email') as HTMLInputElement;
+      if (loginEmail) loginEmail.value = email;
+    } else {
+      showAuthError(err.message || 'Registration failed. Please check your details.');
+    }
+  } finally {
+    if (btn) {
+      btn.disabled = false;
+      btn.innerHTML = '<i data-lucide="user-plus" class="w-3.5 h-3.5"></i> Create Free Account';
+      if (typeof lucide !== 'undefined') lucide.createIcons();
+    }
   }
+}
+
+// Fallback compatibility
+async function handleEmailAuthSubmit(e: Event) {
+  handleSignInSubmit(e);
 }
 
 async function handleUserLogout() {
@@ -3814,6 +4193,9 @@ function attachWindowGlobalFunctions() {
   w.resetSearchFilters = resetSearchFilters;
   w.copyModalPrompt = copyModalPrompt;
   w.openAuthModal = openAuthModal;
+  w.switchAuthTab = switchAuthTab;
+  w.handleSignInSubmit = handleSignInSubmit;
+  w.handleSignUpSubmit = handleSignUpSubmit;
   w.handleGoogleSignIn = handleGoogleSignIn;
   w.handleEmailAuthSubmit = handleEmailAuthSubmit;
   w.handleUserLogout = handleUserLogout;
@@ -3824,14 +4206,24 @@ function attachWindowGlobalFunctions() {
   w.openUserSubmitModal = openUserSubmitModal;
   w.openAddPromptModal = openAddPromptModal;
   w.handleSavePromptForm = handleSavePromptForm;
-  w.handleUserImageUpload = handleUserImageUpload;
-  w.uploadUserImageButton = uploadUserImageButton;
+  w.handleUserImageUpload = handleUserMultiImageUpload;
+  w.uploadUserImageButton = uploadUserMultiImageButton;
+  w.handleUserMultiImageUpload = handleUserMultiImageUpload;
+  w.uploadUserMultiImageButton = uploadUserMultiImageButton;
+  w.addUserImageUrl = addUserImageUrl;
+  w.removeUserFormImage = removeUserFormImage;
   w.editUserPrompt = editUserPrompt;
   w.deleteUserPromptConfirm = deleteUserPromptConfirm;
   w.handleContactSubmit = handleContactSubmit;
   w.loadBlogs = loadBlogs;
   w.viewBlogPostDetail = viewBlogPostDetail;
   w.setEventTheme = setEventTheme;
+
+  // Carousel & Image Gallery methods
+  w.prevDetailImage = prevDetailImage;
+  w.nextDetailImage = nextDetailImage;
+  w.setDetailImageIndex = setDetailImageIndex;
+  w.openCurrentFullscreenImage = openCurrentFullscreenImage;
 
   // Copy prompt text from any card — also increments copyCount and copiedToday
   w.copyPromptText = (id: string, e?: Event) => {
@@ -3866,16 +4258,37 @@ function attachWindowGlobalFunctions() {
   w.shareOnWhatsApp = shareOnWhatsApp;
   w.renderGalleryTagPills = renderGalleryTagPills;
 
+  // Deep Link AI Generator with Auto Prompt Copy
   w.generateInAITool = () => {
     if (!currentSelectedPrompt) return;
-    const tool = currentSelectedPrompt.tool.toLowerCase();
-    let url = 'https://chatgpt.com';
-    if (tool.includes('midjourney')) url = 'https://www.midjourney.com';
-    else if (tool.includes('gemini')) url = 'https://gemini.google.com';
-    else if (tool.includes('claude')) url = 'https://claude.ai';
-    else if (tool.includes('flux')) url = 'https://flux.ai';
-    else if (tool.includes('ideogram')) url = 'https://ideogram.ai';
-    else if (tool.includes('leonardo')) url = 'https://leonardo.ai';
+    const promptText = currentSelectedPrompt.prompt;
+    const tool = (currentSelectedPrompt.tool || '').toLowerCase();
+    
+    // Copy the prompt to clipboard
+    if (navigator.clipboard) {
+      navigator.clipboard.writeText(promptText);
+      updateDoc(doc(db, 'prompts', currentSelectedPrompt.id), { copyCount: increment(1) }).catch(() => {});
+      incrementCopiedTodayCounter();
+    }
+    
+    let url = 'https://chatgpt.com/';
+    if (tool.includes('chatgpt') || tool.includes('gpt')) {
+      url = `https://chatgpt.com/?q=${encodeURIComponent(promptText)}`;
+    } else if (tool.includes('midjourney')) {
+      url = 'https://www.midjourney.com/explore';
+    } else if (tool.includes('gemini')) {
+      url = 'https://gemini.google.com/app';
+    } else if (tool.includes('claude')) {
+      url = 'https://claude.ai/new';
+    } else if (tool.includes('flux')) {
+      url = 'https://flux.ai/generate';
+    } else if (tool.includes('ideogram')) {
+      url = 'https://ideogram.ai/create';
+    } else if (tool.includes('leonardo')) {
+      url = 'https://leonardo.ai';
+    }
+    
+    showToast(`Prompt copied to clipboard! Opening ${currentSelectedPrompt.tool}...`, 'success');
     window.open(url, '_blank');
   };
 }
